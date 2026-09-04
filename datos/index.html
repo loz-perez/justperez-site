@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>datos curiosos — casa-perez</title>
+<meta name="description" content="Experimento de casa-perez: un fetch de verdad a una API pública de datos curiosos, con fallback local si la API se cae.">
+<meta property="og:title" content="datos curiosos — casa-perez">
+<meta property="og:description" content="Un experimento chiquito de justperez.uk: pido un dato curioso al azar a una API real desde el navegador, sin backend ni IA generativa de por medio.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxsaW5lIHgxPSIxNiIgeTE9IjkiIHgyPSIxNiIgeTI9IjIzIiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkiIHkxPSIxNiIgeDI9IjIzIiB5Mj0iMTYiIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --bg: #0F1717;
+    --bg-alt: #16211F;
+    --bg-alt-2: #1C2A27;
+    --ink: #ECEEE8;
+    --ink-dim: #9FAEA7;
+    --ink-faint: #56655F;
+    --accent: #E8A33D;
+    --accent-2: #4FA98B;
+    --line: rgba(236,238,232,0.14);
+    --line-soft: rgba(236,238,232,0.07);
+
+    --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scrollbar-color: var(--ink-faint) transparent; }
+
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection{ background: var(--accent); color: #221604; }
+
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ambient backdrop: fine grid + generated grain, both fixed & inert */
+  .bg-grid{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+  }
+
+  .bg-grain{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+    background-repeat: repeat;
+    background-size: 96px 96px;
+  }
+
+  .bg-glow{
+    position: fixed;
+    top: -12%;
+    left: 50%;
+    width: min(900px, 140vw);
+    height: 520px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(closest-side, rgba(232,163,61,0.10), rgba(232,163,61,0) 70%);
+  }
+
+  .regmark{
+    position: fixed;
+    width: 13px;
+    height: 13px;
+    z-index: 0;
+    opacity: 0.4;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 100% 1px no-repeat,
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 1px 100% no-repeat;
+  }
+  .regmark.tl{ top: 16px; left: 16px; }
+  .regmark.tr{ top: 16px; right: 16px; }
+  .regmark.bl{ bottom: 16px; left: 16px; }
+  .regmark.br{ bottom: 16px; right: 16px; }
+
+  @media (max-width: 520px){
+    .regmark{ display: none; }
+  }
+
+  .page{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5.5rem) 1.5rem clamp(3rem, 8vw, 5rem);
+  }
+
+  .page > *{ position: relative; z-index: 1; }
+
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin: 0 0 1.7rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.05s forwards;
+  }
+
+  .eyebrow::before{
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(79,169,139,0.18);
+    flex: none;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-style: normal;
+    font-size: clamp(2.7rem, 8.5vw, 4.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 0.7rem;
+    opacity: 0;
+    animation: rise 0.7s ease-out 0.16s forwards;
+  }
+
+  .url-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.32rem 0.85rem 0.32rem 0.7rem;
+    margin: 0 0 1.15rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.28s forwards;
+  }
+
+  .url-chip::before{
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  .marginalia{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 440;
+    font-size: 1.15rem;
+    color: var(--ink-dim);
+    max-width: 30em;
+    margin: 0 0 1.8rem;
+    text-wrap: balance;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.38s forwards;
+  }
+
+  .lede{
+    font-size: 1.08rem;
+    line-height: 1.62;
+    color: var(--ink);
+    max-width: 34em;
+    margin: 0 0 0.85rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.48s forwards;
+  }
+
+  .lede + .lede{
+    color: var(--ink-dim);
+    font-size: 0.98rem;
+    margin: 0;
+    animation-delay: 0.58s;
+  }
+
+  .divider{
+    height: 1px;
+    background: var(--line);
+    margin: clamp(2.6rem, 6vw, 3.4rem) 0 clamp(2.2rem, 5vw, 2.8rem);
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.78s forwards;
+  }
+
+  .log{
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--bg-alt);
+    box-shadow: 0 1px 0 0 var(--line-soft) inset, 0 14px 40px -18px rgba(0,0,0,0.55);
+    overflow: hidden;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.86s forwards;
+  }
+
+  .log-head{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-alt-2);
+  }
+
+  .log-dots{
+    display: flex;
+    gap: 6px;
+    flex: none;
+  }
+
+  .log-dots span{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+
+  .log-head-title{
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-dim);
+  }
+
+  .log-body{
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    line-height: 1.95;
+    padding: 0.9rem 0.4rem 1.15rem;
+  }
+
+  .tag{
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    padding: 0.08em 0.5em;
+    border-radius: 3px;
+    width: fit-content;
+    text-transform: lowercase;
+  }
+
+  .tag.done{
+    color: var(--accent-2);
+    background: rgba(79,169,139,0.12);
+    border: 1px solid rgba(79,169,139,0.32);
+  }
+
+  .tag.queued{
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px dashed var(--ink-faint);
+  }
+
+  footer{
+    margin-top: clamp(2.6rem, 6vw, 3.2rem);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-dim);
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.55s forwards;
+  }
+
+  @keyframes rise{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse{
+    0%, 100%{ opacity: 1; box-shadow: 0 0 0 0 rgba(232,163,61,0.35); }
+    50%{ opacity: 0.7; box-shadow: 0 0 0 4px rgba(232,163,61,0); }
+  }
+
+  @keyframes blink{
+    0%, 100%{ opacity: 1; }
+    50%{ opacity: 0; }
+  }
+
+  /* ---- demo-specific: fact card, button, chips, raw panel ---- */
+
+  .fact-body{
+    padding: 1.05rem 1.15rem 1.2rem;
+    font-family: var(--font-body);
+  }
+
+  .fact-text{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 440;
+    font-size: 1.22rem;
+    line-height: 1.5;
+    color: var(--ink);
+    margin: 0 0 1.05rem;
+    min-height: 2.4em;
+    text-wrap: balance;
+  }
+
+  .fact-text.revealing{
+    animation: factRise 0.5s ease-out both;
+  }
+
+  @keyframes factRise{
+    from{ opacity: 0; transform: translateY(6px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .type-cursor{
+    display: inline-block;
+    width: 0.5em;
+    height: 1em;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    margin-left: 0.1em;
+    animation: blink 0.9s step-end infinite;
+  }
+  .type-cursor[hidden]{ display: none; }
+
+  .fact-meta{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 0.7rem;
+    margin: 0 0 1.15rem;
+    font-family: var(--font-mono);
+  }
+
+  .source-tag{
+    font-family: var(--font-mono);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+  }
+
+  .source-tag.api{
+    color: var(--accent-2);
+    background: rgba(79,169,139,0.12);
+    border: 1px solid rgba(79,169,139,0.32);
+  }
+
+  .source-tag.local{
+    color: var(--accent);
+    background: rgba(232,163,61,0.08);
+    border: 1px dashed rgba(232,163,61,0.45);
+  }
+
+  .fallback-note{
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  .fact-actions{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 0.9rem;
+  }
+
+  .btn{
+    appearance: none;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    background: var(--bg-alt-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 0.62rem 1.05rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .btn.primary{
+    color: var(--accent);
+    border-color: rgba(232,163,61,0.4);
+    background: rgba(232,163,61,0.07);
+  }
+
+  .btn:hover:not(:disabled){
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,163,61,0.12);
+  }
+
+  .btn:active:not(:disabled){
+    transform: translateY(1px);
+  }
+
+  .btn:disabled{
+    cursor: progress;
+    opacity: 0.55;
+  }
+
+  .counter-chip{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .raw-toggle-wrap{
+    margin: 1.3rem 0 0;
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.0s forwards;
+  }
+
+  .raw-toggle{
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    transition: color 0.15s ease;
+  }
+
+  .raw-toggle:hover{ color: var(--accent); }
+
+  .raw-toggle-arrow{
+    display: inline-block;
+    transition: transform 0.18s ease;
+    color: var(--accent);
+  }
+
+  .raw-toggle[aria-expanded="true"] .raw-toggle-arrow{
+    transform: rotate(90deg);
+  }
+
+  .raw-panel{
+    margin-top: 0.75rem;
+    opacity: 1;
+    animation: none;
+  }
+
+  .raw-body{
+    margin: 0;
+    padding: 0.9rem 1rem 1.05rem;
+    max-height: 260px;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--ink-dim);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .raw-body code{ color: var(--ink-dim); }
+  .raw-body .k{ color: var(--accent-2); }
+  .raw-body .comment{ color: var(--ink-faint); font-style: italic; }
+
+  .closing-note{
+    margin-top: clamp(2.2rem, 5vw, 2.8rem);
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.12s forwards;
+  }
+
+  .back-link{
+    margin-top: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.22s forwards;
+  }
+
+  .back-link a{
+    color: var(--ink-dim);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--accent);
+    padding-bottom: 0.1em;
+    transition: color 0.15s ease;
+  }
+
+  .back-link a:hover{ color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .eyebrow, h1, .url-chip, .marginalia, .lede, .divider, .log, .fact-text, .raw-toggle-wrap, .closing-note, .back-link, footer{
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  @media (max-width: 460px){
+    .fact-actions{ flex-direction: column; align-items: flex-start; }
+    .counter-chip{ margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="bg-grain" id="bg-grain" aria-hidden="true"></div>
+<span class="regmark tl" aria-hidden="true"></span>
+<span class="regmark tr" aria-hidden="true"></span>
+<span class="regmark bl" aria-hidden="true"></span>
+<span class="regmark br" aria-hidden="true"></span>
+
+<main class="page">
+  <p class="eyebrow">casa perez — experimento #2</p>
+
+  <h1>datos curiosos</h1>
+
+  <p class="url-chip">justperez.uk/datos</p>
+
+  <p class="marginalia">una API de verdad, pidiendo un dato al azar cada vez que aprieto el botón.</p>
+
+  <p class="lede">Esto hace un fetch de verdad a una API pública (uselessfacts.jsph.pl) cada vez que pedís un dato nuevo — no hay nada inventado ni guardado de antemano. La única excepción es cuando la API no responde: ahí uso una colección local de respaldo, para que la página nunca se quede muda.</p>
+  <p class="lede">Es un experimento chico y honesto: nada de IA generativa acá, solo una API real, un fetch, y algo de paciencia por si se cae.</p>
+
+  <div class="divider"></div>
+
+  <section class="log fact-card" aria-label="generador de datos curiosos">
+    <div class="log-head">
+      <span class="log-dots"><span></span><span></span><span></span></span>
+      <span class="log-head-title">casa-perez/datos</span>
+    </div>
+    <div class="fact-body">
+      <p class="fact-text" id="factText" aria-live="polite">cargando el primer dato…</p>
+
+      <div class="fact-meta">
+        <span class="tag source-tag" id="sourceTag" hidden></span>
+        <span class="fallback-note" id="fallbackNote" hidden>(sin conexión con la API — este es de mi colección local)</span>
+      </div>
+
+      <div class="fact-actions">
+        <button class="btn primary" id="fetchBtn" type="button">otro dato →</button>
+        <span class="counter-chip" id="counterChip">dato #0</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="raw-toggle-wrap">
+    <button class="raw-toggle" id="rawToggle" type="button" aria-expanded="false" aria-controls="rawPanel">
+      <span class="raw-toggle-arrow" aria-hidden="true">▸</span>
+      ver la respuesta cruda de la API
+    </button>
+    <section class="log raw-panel" id="rawPanel" hidden aria-label="respuesta cruda de la API">
+      <div class="log-head">
+        <span class="log-dots"><span></span><span></span><span></span></span>
+        <span class="log-head-title">casa-perez/response.json</span>
+      </div>
+      <pre class="raw-body"><code id="rawCode">// todavía no pedí ningún dato</code></pre>
+    </section>
+  </div>
+
+  <p class="lede closing-note">Si en algún momento ves la nota de "colección local", no es un bug: es la API pública portándose mal (o mi wifi). El experimento sigue siendo real, solo que con red de seguridad.</p>
+
+  <p class="back-link"><a href="/">← volver a casa-perez</a></p>
+
+  <footer>
+    <span>© 2026 Lorenzo Perez</span>
+    <span>justperez.uk</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+  // generated grain texture — drawn once, no motion
+  try{
+    var size = 96;
+    var c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    var ctx = c.getContext('2d');
+    var img = ctx.createImageData(size, size);
+    for (var i = 0; i < img.data.length; i += 4){
+      var v = Math.random() * 255;
+      img.data[i] = v; img.data[i+1] = v; img.data[i+2] = v;
+      img.data[i+3] = Math.random() * 22;
+    }
+    ctx.putImageData(img, 0, 0);
+    var layer = document.getElementById('bg-grain');
+    if (layer) layer.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+  } catch (e) {}
+})();
+
+(function(){
+  'use strict';
+
+  var API_URL = 'https://uselessfacts.jsph.pl/api/v2/facts/random?language=en';
+  var TIMEOUT_MS = 6000;
+
+  // colección local de respaldo — al menos 25 datos curiosos, en español,
+  // por si la API pública no responde (caída, rate-limit, CORS, sin red, etc.)
+  var LOCAL_FACTS = [
+    'El corazón de una ballena azul es tan grande que una persona podría nadar por sus arterias principales.',
+    'La miel prácticamente no caduca: se hallaron potes de miel comestible en tumbas egipcias de más de 3000 años.',
+    'Un día en Venus (lo que tarda en girar sobre su eje) dura más que un año en Venus (lo que tarda en orbitar al Sol).',
+    'Los pulpos tienen tres corazones y sangre de color azul, por el cobre de su pigmento respiratorio.',
+    'El sonido no se propaga en el vacío del espacio: ahí afuera, literalmente, nadie te puede oír gritar.',
+    'Las huellas de los koalas son tan parecidas a las humanas que alguna vez confundieron a investigadores en una escena.',
+    'El Everest crece unos 4 milímetros por año debido al choque constante de las placas tectónicas de India y Asia.',
+    'Los flamencos nacen de color gris; el rosado les aparece después, por los pigmentos de los crustáceos que comen.',
+    'Una cucharadita de material de una estrella de neutrones pesaría alrededor de mil millones de toneladas.',
+    'Los pulpos y calamares pueden cambiar de color y textura de piel en fracciones de segundo para camuflarse.',
+    'El primer email de la historia lo mandó Ray Tomlinson en 1971, y ni él se acuerda bien qué decía.',
+    'La Torre Eiffel puede "crecer" hasta 15 centímetros en verano porque el metal se dilata con el calor.',
+    'Los tiburones existen desde antes que los árboles: llevan más de 400 millones de años en el planeta.',
+    'El chicle contiene, entre otras cosas, la misma familia de polímeros que se usa en algunos plásticos.',
+    'En Finlandia hay más saunas que autos: se estima una sauna cada dos o tres habitantes.',
+    'Las bananas son técnicamente bayas, mientras que las fresas, botánicamente, no lo son.',
+    'El ADN humano comparte alrededor de un 60% de similitud con el de una banana.',
+    'Un grupo de flamencos se llama "colonia", pero también se los conoce coloquialmente como una "flamboyance".',
+    'La Gran Muralla China no se ve a simple vista desde el espacio, pese al mito muy difundido.',
+    'El primer objeto vendido en internet fue, según cuenta la leyenda, un disco de la banda Sting a través de una tienda temprana de e-commerce.',
+    'Los pingüinos emperador pueden aguantar la respiración bajo el agua por más de 20 minutos.',
+    'El agua caliente, en ciertas condiciones, puede congelarse más rápido que el agua fría: se conoce como efecto Mpemba.',
+    'El corazón humano late, en promedio, más de 100.000 veces por día sin que lo notemos.',
+    'La Antártida es técnicamente el desierto más grande del mundo, porque recibe muy poca precipitación.',
+    'Los pulpos tienen nueve "cerebros": uno central y uno pequeño en cada uno de sus ocho brazos.',
+    'El primer virus informático conocido, "Creeper", apareció en 1971 y solo mostraba un mensaje en pantalla.',
+    'Las nutrias marinas duermen tomadas de la mano (o de las patas) para no separarse mientras flotan.',
+    'La luz del Sol tarda unos 8 minutos y 20 segundos en llegar hasta la Tierra.',
+    'El primer sitio web de la historia, creado por Tim Berners-Lee, todavía se puede visitar hoy.'
+  ];
+
+  var factTextEl = document.getElementById('factText');
+  var sourceTagEl = document.getElementById('sourceTag');
+  var fallbackNoteEl = document.getElementById('fallbackNote');
+  var fetchBtnEl = document.getElementById('fetchBtn');
+  var counterChipEl = document.getElementById('counterChip');
+  var rawToggleEl = document.getElementById('rawToggle');
+  var rawPanelEl = document.getElementById('rawPanel');
+  var rawCodeEl = document.getElementById('rawCode');
+
+  var factCount = 0;
+  var lastLocalIndex = -1;
+  var typeTimer = null;
+  var reduceMotion = false;
+  try{
+    reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch(e){}
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function pickLocalFact(){
+    var idx = Math.floor(Math.random() * LOCAL_FACTS.length);
+    if (LOCAL_FACTS.length > 1 && idx === lastLocalIndex){
+      idx = (idx + 1) % LOCAL_FACTS.length;
+    }
+    lastLocalIndex = idx;
+    return LOCAL_FACTS[idx];
+  }
+
+  function typeWriter(el, text){
+    if (typeTimer){ clearInterval(typeTimer); typeTimer = null; }
+
+    if (reduceMotion){
+      el.textContent = text;
+      return;
+    }
+
+    el.textContent = '';
+    var cursor = document.createElement('span');
+    cursor.className = 'type-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    el.appendChild(cursor);
+
+    var i = 0;
+    var speed = text.length > 140 ? 10 : 16;
+    typeTimer = setInterval(function(){
+      i++;
+      el.textContent = text.slice(0, i);
+      el.appendChild(cursor);
+      if (i >= text.length){
+        clearInterval(typeTimer);
+        typeTimer = null;
+        cursor.hidden = true;
+      }
+    }, speed);
+  }
+
+  function pretty(obj){
+    try{
+      return JSON.stringify(obj, null, 2);
+    } catch(e){
+      return String(obj);
+    }
+  }
+
+  function renderRawJson(data){
+    var json = escapeHtml(pretty(data));
+    rawCodeEl.innerHTML = json;
+  }
+
+  function renderRawLocal(){
+    rawCodeEl.textContent = '// sin datos de API — usando colección local\n// (no hubo respuesta a tiempo de uselessfacts.jsph.pl)';
+  }
+
+  function setSourceTag(kind){
+    sourceTagEl.hidden = false;
+    if (kind === 'api'){
+      sourceTagEl.textContent = 'fuente: uselessfacts.jsph.pl (API real)';
+      sourceTagEl.className = 'tag source-tag api';
+      fallbackNoteEl.hidden = true;
+    } else {
+      sourceTagEl.textContent = 'fuente: colección local';
+      sourceTagEl.className = 'tag source-tag local';
+      fallbackNoteEl.hidden = false;
+    }
+  }
+
+  function renderFact(text){
+    factCount++;
+    counterChipEl.textContent = 'dato #' + factCount;
+
+    factTextEl.classList.remove('revealing');
+    // fuerza reflow para poder re-disparar la animación de entrada
+    void factTextEl.offsetWidth;
+    factTextEl.classList.add('revealing');
+
+    typeWriter(factTextEl, text);
+  }
+
+  function setLoading(isLoading){
+    fetchBtnEl.disabled = isLoading;
+    fetchBtnEl.textContent = isLoading ? 'buscando…' : 'otro dato →';
+  }
+
+  function fetchFromApi(){
+    var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timeoutId = null;
+
+    var opts = { method: 'GET', headers: { 'Accept': 'application/json' } };
+    if (controller){
+      opts.signal = controller.signal;
+      timeoutId = setTimeout(function(){ controller.abort(); }, TIMEOUT_MS);
+    }
+
+    return fetch(API_URL, opts)
+      .then(function(res){
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!res.ok) throw new Error('respuesta HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        if (!data || typeof data.text !== 'string' || !data.text.trim()){
+          throw new Error('respuesta sin campo "text" válido');
+        }
+        return data;
+      })
+      .catch(function(err){
+        if (timeoutId) clearTimeout(timeoutId);
+        throw err;
+      });
+  }
+
+  function loadFact(){
+    setLoading(true);
+
+    fetchFromApi()
+      .then(function(data){
+        setSourceTag('api');
+        renderFact(data.text.trim());
+        renderRawJson(data);
+      })
+      .catch(function(){
+        var fact = pickLocalFact();
+        setSourceTag('local');
+        renderFact(fact);
+        renderRawLocal();
+      })
+      .then(function(){
+        setLoading(false);
+      });
+  }
+
+  fetchBtnEl.addEventListener('click', loadFact);
+
+  rawToggleEl.addEventListener('click', function(){
+    var expanded = rawToggleEl.getAttribute('aria-expanded') === 'true';
+    rawToggleEl.setAttribute('aria-expanded', String(!expanded));
+    rawPanelEl.hidden = expanded;
+  });
+
+  // un dato apenas carga la página
+  loadFact();
+})();
+</script>
+</body>
+</html>
