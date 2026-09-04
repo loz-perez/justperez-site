@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cohetes que aprenden — casa-perez</title>
+<meta name="description" content="Un experimento de casa-perez: una población de cohetes ciegos evoluciona con un algoritmo genético, generación tras generación, hasta aprender a esquivar una pared y llegar a la meta. 100% en el navegador.">
+<meta property="og:title" content="cohetes que aprenden — justperez.uk">
+<meta property="og:description" content="Selección natural en el navegador: cohetes con genomas al azar cruzan y mutan hasta encontrar el hueco en la pared. Experimento #1 de casa-perez.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxsaW5lIHgxPSIxNiIgeTE9IjkiIHgyPSIxNiIgeTI9IjIzIiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkiIHkxPSIxNiIgeDI9IjIzIiB5Mj0iMTYiIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --bg: #0F1717;
+    --bg-alt: #16211F;
+    --bg-alt-2: #1C2A27;
+    --ink: #ECEEE8;
+    --ink-dim: #9FAEA7;
+    --ink-faint: #56655F;
+    --accent: #E8A33D;
+    --accent-2: #4FA98B;
+    --line: rgba(236,238,232,0.14);
+    --line-soft: rgba(236,238,232,0.07);
+
+    --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scrollbar-color: var(--ink-faint) transparent; }
+
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection{ background: var(--accent); color: #221604; }
+
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ambient backdrop: fine grid + generated grain, both fixed & inert */
+  .bg-grid{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+  }
+
+  .bg-grain{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+    background-repeat: repeat;
+    background-size: 96px 96px;
+  }
+
+  .bg-glow{
+    position: fixed;
+    top: -12%;
+    left: 50%;
+    width: min(900px, 140vw);
+    height: 520px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(closest-side, rgba(232,163,61,0.10), rgba(232,163,61,0) 70%);
+  }
+
+  .regmark{
+    position: fixed;
+    width: 13px;
+    height: 13px;
+    z-index: 0;
+    opacity: 0.4;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 100% 1px no-repeat,
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 1px 100% no-repeat;
+  }
+  .regmark.tl{ top: 16px; left: 16px; }
+  .regmark.tr{ top: 16px; right: 16px; }
+  .regmark.bl{ bottom: 16px; left: 16px; }
+  .regmark.br{ bottom: 16px; right: 16px; }
+
+  @media (max-width: 520px){
+    .regmark{ display: none; }
+  }
+
+  .page{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5.5rem) 1.5rem clamp(3rem, 8vw, 5rem);
+  }
+
+  .page.wide{ max-width: 680px; }
+
+  .page > *{ position: relative; z-index: 1; }
+
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin: 0 0 1.7rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.05s forwards;
+  }
+
+  .eyebrow::before{
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(79,169,139,0.18);
+    flex: none;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-style: normal;
+    font-size: clamp(2.7rem, 8.5vw, 4.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 0.7rem;
+    opacity: 0;
+    animation: rise 0.7s ease-out 0.16s forwards;
+  }
+
+  .url-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.32rem 0.85rem 0.32rem 0.7rem;
+    margin: 0 0 1.15rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.28s forwards;
+  }
+
+  .url-chip::before{
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  .marginalia{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 440;
+    font-size: 1.15rem;
+    color: var(--ink-dim);
+    max-width: 30em;
+    margin: 0 0 1.8rem;
+    text-wrap: balance;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.38s forwards;
+  }
+
+  .lede{
+    font-size: 1.08rem;
+    line-height: 1.62;
+    color: var(--ink);
+    max-width: 34em;
+    margin: 0 0 0.85rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.48s forwards;
+  }
+
+  .lede + .lede{
+    color: var(--ink-dim);
+    font-size: 0.98rem;
+    margin: 0;
+    animation-delay: 0.58s;
+  }
+
+  .divider{
+    height: 1px;
+    background: var(--line);
+    margin: clamp(2.6rem, 6vw, 3.4rem) 0 clamp(2.2rem, 5vw, 2.8rem);
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.66s forwards;
+  }
+
+  /* ---- simulation panel ---- */
+
+  .sim-panel{
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.74s forwards;
+  }
+
+  .sim-stage{
+    aspect-ratio: 1 / 1;
+    max-width: 560px;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--bg-alt);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 1px 0 0 var(--line-soft) inset, 0 14px 40px -18px rgba(0,0,0,0.55);
+  }
+
+  .sim-stage canvas{
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .sim-controls{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1.1rem 0 0;
+  }
+
+  .sim-btn{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .sim-btn:hover,
+  .sim-btn:focus-visible{
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .sim-btn:active{ background: rgba(232,163,61,0.08); }
+
+  .sim-stats{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1rem 0 0;
+  }
+
+  .stat-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.32rem 0.85rem 0.32rem 0.7rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-chip::before{
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    flex: none;
+  }
+
+  /* ---- log (reused from homepage) ---- */
+
+  .log{
+    margin-top: clamp(1.8rem, 4vw, 2.4rem);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--bg-alt);
+    box-shadow: 0 1px 0 0 var(--line-soft) inset, 0 14px 40px -18px rgba(0,0,0,0.55);
+    overflow: hidden;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.9s forwards;
+  }
+
+  .log-head{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-alt-2);
+  }
+
+  .log-dots{
+    display: flex;
+    gap: 6px;
+    flex: none;
+  }
+
+  .log-dots span{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+
+  .log-head-title{
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-dim);
+  }
+
+  .log-body{
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    line-height: 1.95;
+    padding: 0.9rem 0.4rem 1.15rem;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .log-row{
+    display: grid;
+    grid-template-columns: 5.6em 1fr;
+    gap: 0 0.9em;
+    align-items: baseline;
+    padding: 0.28rem 0.75rem;
+    margin: 0 0.35rem;
+    border-radius: 4px;
+    opacity: 0;
+    animation: entry 0.5s ease-out forwards;
+    transition: background-color 0.15s ease;
+  }
+
+  .log-row:hover{ background: var(--line-soft); }
+
+  .log-row:nth-child(1){ animation-delay: 1.05s; }
+
+  .tag{
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    padding: 0.08em 0.5em;
+    border-radius: 3px;
+    width: fit-content;
+    text-transform: lowercase;
+  }
+
+  .tag.gen{
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--line);
+  }
+
+  .log-msg{ color: var(--ink); }
+
+  .log-msg .meta{
+    color: var(--ink-dim);
+    font-size: 0.78em;
+  }
+
+  .log-row.record .log-msg,
+  .log-row.record .meta{ color: var(--accent); }
+
+  .outro{
+    font-size: 0.98rem;
+    line-height: 1.62;
+    color: var(--ink-dim);
+    max-width: 34em;
+    margin: clamp(1.8rem, 4vw, 2.2rem) 0 1rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.05s forwards;
+  }
+
+  .back-link{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--ink-dim);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--accent);
+    padding-bottom: 0.15em;
+    transition: color 0.15s ease;
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.15s forwards;
+  }
+
+  .back-link:hover{ color: var(--accent); }
+
+  footer{
+    margin-top: clamp(2.6rem, 6vw, 3.2rem);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-dim);
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.3s forwards;
+  }
+
+  @keyframes rise{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes entry{
+    from{ opacity: 0; transform: translateX(-6px); }
+    to{ opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pulse{
+    0%, 100%{ opacity: 1; box-shadow: 0 0 0 0 rgba(232,163,61,0.35); }
+    50%{ opacity: 0.7; box-shadow: 0 0 0 4px rgba(232,163,61,0); }
+  }
+
+  @keyframes blink{
+    0%, 100%{ opacity: 1; }
+    50%{ opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .eyebrow, h1, .url-chip, .marginalia, .lede, .divider, .sim-panel, .log, .log-row, .outro, .back-link, footer{
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  @media (max-width: 460px){
+    .log-row{ grid-template-columns: 1fr; gap: 0.2em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="bg-grain" id="bg-grain" aria-hidden="true"></div>
+<span class="regmark tl" aria-hidden="true"></span>
+<span class="regmark tr" aria-hidden="true"></span>
+<span class="regmark bl" aria-hidden="true"></span>
+<span class="regmark br" aria-hidden="true"></span>
+
+<main class="page wide">
+  <p class="eyebrow">casa perez — experimento #1</p>
+
+  <h1>cohetes que aprenden</h1>
+
+  <p class="url-chip">justperez.uk/cohetes</p>
+
+  <p class="marginalia">una población de cohetes ciegos, tratando de llegar a la luz.</p>
+
+  <p class="lede">Cada cohete nace con un genoma al azar — una secuencia de empujones que define hacia dónde apunta en cada instante de su vida. La mayoría choca contra la pared o se pierde en el camino.</p>
+  <p class="lede">Cada generación cruzo los genomas de los que llegaron más lejos, con algo de mutación de yapa, y repito. No hay mapa ni instrucciones — solo selección natural y tiempo. Mirá cómo, generación tras generación, aprenden a esquivar la pared y llegar a la meta.</p>
+
+  <div class="divider"></div>
+
+  <section class="sim-panel" aria-label="simulación de cohetes evolutivos">
+    <div class="sim-stage">
+      <canvas id="sim-canvas" width="560" height="560" role="img" aria-label="Arena de simulación: cohetes teal intentan atravesar el hueco de una pared para llegar a un objetivo ámbar."></canvas>
+    </div>
+
+    <div class="sim-controls">
+      <button id="btn-play" class="sim-btn" type="button">⏸ Pausar</button>
+      <button id="btn-reset" class="sim-btn" type="button">↺ Reiniciar</button>
+      <button id="btn-ff" class="sim-btn" type="button">⏩ +10 generaciones</button>
+    </div>
+
+    <div class="sim-stats">
+      <span class="stat-chip" id="stat-gen">gen 00</span>
+      <span class="stat-chip" id="stat-pop">50 vivos · 0 llegaron de 50</span>
+      <span class="stat-chip" id="stat-best">mejor histórico: 0.000</span>
+    </div>
+
+    <section class="log" aria-label="registro de generaciones">
+      <div class="log-head">
+        <span class="log-dots"><span></span><span></span><span></span></span>
+        <span class="log-head-title">casa-perez/cohetes/log</span>
+      </div>
+      <div class="log-body" id="log-body"></div>
+    </section>
+  </section>
+
+  <p class="outro">Nada de esto está guardado en ningún lado — cada vez que entrás arranca una población nueva, toda al azar. Es el experimento más tonto y más lindo que se me ocurrió para probar esto de subir cosas a medida que las voy armando.</p>
+
+  <a class="back-link" href="/">← volver a casa-perez</a>
+
+  <footer>
+    <span>© 2026 Lorenzo Perez</span>
+    <span>justperez.uk</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  // generated grain texture — drawn once, no motion
+  (function(){
+    try{
+      var size = 96;
+      var c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      var gctx = c.getContext('2d');
+      var img = gctx.createImageData(size, size);
+      for (var i = 0; i < img.data.length; i += 4){
+        var v = Math.random() * 255;
+        img.data[i] = v; img.data[i+1] = v; img.data[i+2] = v;
+        img.data[i+3] = Math.random() * 22;
+      }
+      gctx.putImageData(img, 0, 0);
+      var layer = document.getElementById('bg-grain');
+      if (layer) layer.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+    } catch (e) {}
+  })();
+
+  // ---------------------------------------------------------------------
+  // parameters
+  // ---------------------------------------------------------------------
+  var CANVAS_SIZE = 560;
+  var POP = 50;
+  var LIFESPAN = 250;
+  var MAXFORCE = 0.15;
+  var DRAG = 0.995;
+  var MUTATION_RATE = 0.03;
+
+  var START = { x: 280, y: 540 };
+  var TARGET = { x: 280, y: 40, r: 16 };
+
+  var WALL_Y0 = 260, WALL_Y1 = 280;
+  var GAP_X0 = 340, GAP_X1 = 440;
+
+  var COLOR_BG_ALT = '#16211F';
+  var COLOR_TRAIL = 'rgba(22,33,31,0.16)';
+  var COLOR_LINE_FILL = 'rgba(236,238,232,0.08)';
+  var COLOR_LINE_STROKE = 'rgba(236,238,232,0.16)';
+  var COLOR_ACCENT = '#E8A33D';
+  var COLOR_ACCENT_2 = '#4FA98B';
+  var COLOR_DEAD = 'rgba(86,101,95,0.55)';
+
+  // ---------------------------------------------------------------------
+  // canvas
+  // ---------------------------------------------------------------------
+  var canvas = document.getElementById('sim-canvas');
+  var ctx = canvas.getContext('2d');
+
+  // ---------------------------------------------------------------------
+  // state
+  // ---------------------------------------------------------------------
+  var population = [];
+  var generation = 0;
+  var frame = 0;
+  var bestEverFitness = 0.0001;
+  var bestEverGenome = null;
+  var playing = false;
+  var rafId = null;
+
+  // ---------------------------------------------------------------------
+  // genetics / physics helpers
+  // ---------------------------------------------------------------------
+  function randomAngle(){
+    return Math.random() * Math.PI * 2;
+  }
+
+  function randomGenome(){
+    var g = new Array(LIFESPAN);
+    for (var i = 0; i < LIFESPAN; i++) g[i] = randomAngle();
+    return g;
+  }
+
+  function makeRocket(genome){
+    return {
+      genome: genome,
+      x: START.x,
+      y: START.y,
+      vx: 0,
+      vy: 0,
+      dead: false,
+      reached: false,
+      finishFrame: -1
+    };
+  }
+
+  function newRandomPopulation(){
+    var arr = new Array(POP);
+    for (var i = 0; i < POP; i++) arr[i] = makeRocket(randomGenome());
+    return arr;
+  }
+
+  function stepRocket(r, i){
+    if (r.dead || r.reached) return;
+
+    var angle = r.genome[i];
+    r.vx += Math.cos(angle) * MAXFORCE;
+    r.vy += Math.sin(angle) * MAXFORCE;
+    r.vx *= DRAG;
+    r.vy *= DRAG;
+    r.x += r.vx;
+    r.y += r.vy;
+
+    if (r.x < 0 || r.x > CANVAS_SIZE || r.y < 0 || r.y > CANVAS_SIZE){
+      r.dead = true;
+      return;
+    }
+
+    if (r.y >= WALL_Y0 && r.y <= WALL_Y1 && (r.x < GAP_X0 || r.x > GAP_X1)){
+      r.dead = true;
+      return;
+    }
+
+    var dx = r.x - TARGET.x, dy = r.y - TARGET.y;
+    if (dx * dx + dy * dy <= TARGET.r * TARGET.r){
+      r.reached = true;
+      r.finishFrame = i;
+    }
+  }
+
+  function fitness(r){
+    var dx = r.x - TARGET.x, dy = r.y - TARGET.y;
+    var d2 = dx * dx + dy * dy;
+    var f = 1 / (d2 + 1);
+    if (r.reached){
+      f = f * 5 + (LIFESPAN - r.finishFrame) * 0.02;
+    }
+    if (r.dead){
+      f *= 0.15;
+    }
+    return Math.max(f, 0.0001);
+  }
+
+  function selectParent(pop, fits, totalFit){
+    var target = Math.random() * totalFit;
+    var acc = 0;
+    for (var i = 0; i < pop.length; i++){
+      acc += fits[i];
+      if (acc >= target) return pop[i];
+    }
+    return pop[pop.length - 1];
+  }
+
+  function crossover(gA, gB){
+    var mid = Math.floor(Math.random() * LIFESPAN);
+    var child = new Array(LIFESPAN);
+    for (var i = 0; i < LIFESPAN; i++){
+      child[i] = i < mid ? gA[i] : gB[i];
+    }
+    return child;
+  }
+
+  function mutate(genome){
+    for (var i = 0; i < genome.length; i++){
+      if (Math.random() < MUTATION_RATE) genome[i] = randomAngle();
+    }
+  }
+
+  function evaluateAndEvolve(){
+    var i, fits = new Array(population.length);
+    var totalFit = 0;
+    for (i = 0; i < population.length; i++){
+      fits[i] = fitness(population[i]);
+      totalFit += fits[i];
+    }
+
+    var bestIdx = 0;
+    for (i = 1; i < fits.length; i++){
+      if (fits[i] > fits[bestIdx]) bestIdx = i;
+    }
+    var genBestFitness = fits[bestIdx];
+    var genBestGenome = population[bestIdx].genome;
+
+    var isRecord = false;
+    if (!bestEverGenome || genBestFitness > bestEverFitness){
+      bestEverFitness = genBestFitness;
+      bestEverGenome = genBestGenome.slice();
+      isRecord = true;
+    }
+
+    var reachedCount = 0;
+    for (i = 0; i < population.length; i++){
+      if (population[i].reached) reachedCount++;
+    }
+
+    logGeneration(generation, reachedCount, genBestFitness, isRecord);
+
+    var newGenomes = new Array(POP);
+    newGenomes[0] = bestEverGenome.slice();
+    for (i = 1; i < POP; i++){
+      var parentA = selectParent(population, fits, totalFit);
+      var parentB = selectParent(population, fits, totalFit);
+      var child = crossover(parentA.genome, parentB.genome);
+      mutate(child);
+      newGenomes[i] = child;
+    }
+
+    var nextPop = new Array(POP);
+    for (i = 0; i < POP; i++) nextPop[i] = makeRocket(newGenomes[i]);
+
+    population = nextPop;
+    generation += 1;
+    frame = 0;
+  }
+
+  function runHeadlessGenerations(count){
+    for (var g = 0; g < count; g++){
+      for (var i = frame; i < LIFESPAN; i++){
+        for (var j = 0; j < population.length; j++) stepRocket(population[j], i);
+      }
+      evaluateAndEvolve();
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // rendering
+  // ---------------------------------------------------------------------
+  function drawWall(){
+    ctx.fillStyle = COLOR_LINE_FILL;
+    ctx.strokeStyle = COLOR_LINE_STROKE;
+    ctx.lineWidth = 1;
+
+    ctx.fillRect(0, WALL_Y0, GAP_X0, WALL_Y1 - WALL_Y0);
+    ctx.strokeRect(0.5, WALL_Y0 + 0.5, GAP_X0 - 1, WALL_Y1 - WALL_Y0 - 1);
+
+    ctx.fillRect(GAP_X1, WALL_Y0, CANVAS_SIZE - GAP_X1, WALL_Y1 - WALL_Y0);
+    ctx.strokeRect(GAP_X1 + 0.5, WALL_Y0 + 0.5, CANVAS_SIZE - GAP_X1 - 1, WALL_Y1 - WALL_Y0 - 1);
+  }
+
+  function drawTarget(){
+    var t = performance.now() / 1000;
+    var pulse = 0.5 + 0.5 * Math.sin(t * 2.4);
+    var glowR = TARGET.r + 10 + pulse * 6;
+
+    ctx.save();
+    var grad = ctx.createRadialGradient(TARGET.x, TARGET.y, 0, TARGET.x, TARGET.y, glowR);
+    grad.addColorStop(0, 'rgba(232,163,61,' + (0.32 + pulse * 0.18) + ')');
+    grad.addColorStop(1, 'rgba(232,163,61,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(TARGET.x, TARGET.y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.fillStyle = COLOR_ACCENT;
+    ctx.arc(TARGET.x, TARGET.y, TARGET.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawRocket(r){
+    if (r.dead){
+      ctx.beginPath();
+      ctx.fillStyle = COLOR_DEAD;
+      ctx.arc(r.x, r.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (r.reached){
+      ctx.save();
+      ctx.shadowColor = COLOR_ACCENT;
+      ctx.shadowBlur = 9;
+      ctx.beginPath();
+      ctx.fillStyle = COLOR_ACCENT;
+      ctx.arc(r.x, r.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.beginPath();
+      ctx.fillStyle = COLOR_ACCENT_2;
+      ctx.arc(r.x, r.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function render(pop, frameIdx){
+    if (frameIdx === 0){
+      ctx.fillStyle = COLOR_BG_ALT;
+    } else {
+      ctx.fillStyle = COLOR_TRAIL;
+    }
+    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    drawWall();
+    drawTarget();
+
+    for (var i = 0; i < pop.length; i++) drawRocket(pop[i]);
+  }
+
+  // ---------------------------------------------------------------------
+  // log panel
+  // ---------------------------------------------------------------------
+  var logBody = document.getElementById('log-body');
+  var MAX_LOG_ROWS = 30;
+
+  function appendLogRow(tagText, msgText, record){
+    var row = document.createElement('div');
+    row.className = 'log-row' + (record ? ' record' : '');
+
+    var tag = document.createElement('span');
+    tag.className = 'tag gen';
+    tag.textContent = tagText;
+
+    var msg = document.createElement('span');
+    msg.className = 'log-msg';
+    msg.textContent = msgText;
+
+    row.appendChild(tag);
+    row.appendChild(msg);
+    logBody.appendChild(row);
+
+    while (logBody.children.length > MAX_LOG_ROWS){
+      logBody.removeChild(logBody.firstChild);
+    }
+    logBody.scrollTop = logBody.scrollHeight;
+  }
+
+  function logGeneration(gen, reachedCount, genBestFitness, isRecord){
+    var tagText = 'gen ' + String(gen).padStart(2, '0');
+    var msgText = reachedCount + '/' + POP + ' llegaron a la meta · mejor ' + genBestFitness.toFixed(2);
+    if (isRecord) msgText += ' · 🏆 nuevo récord';
+    appendLogRow(tagText, msgText, isRecord);
+  }
+
+  function seedLog(){
+    logBody.innerHTML = '';
+    appendLogRow('gen 00', 'población inicial, todo al azar', false);
+  }
+
+  // ---------------------------------------------------------------------
+  // stats
+  // ---------------------------------------------------------------------
+  var statGen = document.getElementById('stat-gen');
+  var statPop = document.getElementById('stat-pop');
+  var statBest = document.getElementById('stat-best');
+
+  function updateStats(){
+    statGen.textContent = 'gen ' + String(generation).padStart(2, '0');
+
+    var alive = 0, reached = 0;
+    for (var i = 0; i < population.length; i++){
+      if (population[i].reached) reached++;
+      else if (!population[i].dead) alive++;
+    }
+    statPop.textContent = alive + ' vivos · ' + reached + ' llegaron de ' + POP;
+    statBest.textContent = 'mejor histórico: ' + bestEverFitness.toFixed(3);
+  }
+
+  // ---------------------------------------------------------------------
+  // main loop / controls
+  // ---------------------------------------------------------------------
+  var btnPlay = document.getElementById('btn-play');
+  var btnReset = document.getElementById('btn-reset');
+  var btnFF = document.getElementById('btn-ff');
+
+  function updatePlayButton(){
+    btnPlay.textContent = playing ? '⏸ Pausar' : '▶ Reproducir';
+  }
+
+  function frameLoop(){
+    for (var i = 0; i < population.length; i++) stepRocket(population[i], frame);
+    render(population, frame);
+    frame++;
+    if (frame >= LIFESPAN){
+      evaluateAndEvolve();
+    }
+    updateStats();
+    if (playing) rafId = requestAnimationFrame(frameLoop);
+  }
+
+  function startLoop(){
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(frameLoop);
+  }
+
+  function stopLoop(){
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  btnPlay.addEventListener('click', function(){
+    playing = !playing;
+    updatePlayButton();
+    if (playing) startLoop();
+    else stopLoop();
+  });
+
+  btnReset.addEventListener('click', function(){
+    playing = false;
+    stopLoop();
+    updatePlayButton();
+
+    generation = 0;
+    frame = 0;
+    bestEverFitness = 0.0001;
+    bestEverGenome = null;
+    population = newRandomPopulation();
+
+    seedLog();
+    render(population, 0);
+    updateStats();
+  });
+
+  btnFF.addEventListener('click', function(){
+    var wasPlaying = playing;
+    playing = false;
+    stopLoop();
+    updatePlayButton();
+
+    runHeadlessGenerations(10);
+
+    render(population, 0);
+    updateStats();
+
+    playing = wasPlaying;
+    updatePlayButton();
+    if (playing) startLoop();
+  });
+
+  // ---------------------------------------------------------------------
+  // init
+  // ---------------------------------------------------------------------
+  population = newRandomPopulation();
+  seedLog();
+  render(population, 0);
+  updateStats();
+
+  playing = true;
+  updatePlayButton();
+  startLoop();
+
+})();
+</script>
+</body>
+</html>
