@@ -9,5 +9,7 @@ sin build, sin frameworks, sin vueltas: un `index.html` que corre solo, servido 
 ```
 casa-perez/log
 [listo]    dominio conectado
-[próximo]  el primer experimento con IA
+[listo]    cohetes que aprenden — algoritmo genético en /cohetes
+[listo]    datos curiosos — API real en /datos
+[próximo]  portfolio de verdad, con proyectos de verdad
 ```

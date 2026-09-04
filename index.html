@@ -6,7 +6,7 @@
 <title>Lorenzo Perez</title>
 <meta name="description" content="Sitio personal de Lorenzo Perez — justperez.uk, en construcción.">
 <meta property="og:title" content="Lorenzo Perez — justperez.uk">
-<meta property="og:description" content="Sitio personal en construcción. Portfolio y experimentos con IA, próximamente.">
+<meta property="og:description" content="Sitio personal en construcción. Primeros experimentos con IA ya arriba: un algoritmo genético y una API de datos curiosos.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxsaW5lIHgxPSIxNiIgeTE9IjkiIHgyPSIxNiIgeTI9IjIzIiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkiIHkxPSIxNiIgeDI9IjIzIiB5Mj0iMTYiIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
@@ -304,6 +304,7 @@
   .log-row:nth-child(2){ animation-delay: 1.14s; }
   .log-row:nth-child(3){ animation-delay: 1.28s; }
   .log-row:nth-child(4){ animation-delay: 1.42s; }
+  .log-row:nth-child(5){ animation-delay: 1.56s; }
 
   .tag{
     font-size: 0.72rem;
@@ -328,6 +329,13 @@
 
   .log-msg{ color: var(--ink); }
   .log-row:has(.queued) .log-msg{ color: var(--ink-dim); }
+
+  .log-msg a{
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--accent);
+  }
+  .log-msg a:hover{ border-bottom-style: solid; }
 
   .log-msg .meta{
     color: var(--ink-dim);
@@ -426,8 +434,9 @@
 
   <p class="lede">Este va a ser mi portfolio, pero todavía no tengo nada terminado para mostrar.</p>
   <p class="lede">Por ahora esto es lo que hay: el dominio andando y la intención de ir subiendo experimentos con IA a medida que los vaya armando.</p>
+  <p class="lede">Los primeros dos ya están arriba — uno mira, otro aprende.</p>
 
-  <span class="status">en construcción — v0.1.0</span>
+  <span class="status">en construcción — v0.2.0</span>
 
   <div class="divider"></div>
 
@@ -446,8 +455,12 @@
         <span class="log-msg">dominio justperez.uk conectado <span class="meta">— 04 sep 2026</span></span>
       </div>
       <div class="log-row">
-        <span class="tag queued">próximo</span>
-        <span class="log-msg">primer experimento con IA</span>
+        <span class="tag done">listo</span>
+        <span class="log-msg"><a href="/cohetes/">cohetes que aprenden</a> — un algoritmo genético evolucionando en vivo <span class="meta">— 04 sep 2026</span></span>
+      </div>
+      <div class="log-row">
+        <span class="tag done">listo</span>
+        <span class="log-msg"><a href="/datos/">datos curiosos</a> — una API de verdad, pedida en vivo <span class="meta">— 04 sep 2026</span></span>
       </div>
       <div class="log-row">
         <span class="tag queued">próximo</span>
