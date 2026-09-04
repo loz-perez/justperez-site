@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lorenzo Perez</title>
+<meta name="description" content="Sitio personal de Lorenzo Perez — justperez.uk, en construcción.">
+<meta property="og:title" content="Lorenzo Perez — justperez.uk">
+<meta property="og:description" content="Sitio personal en construcción. Portfolio y experimentos con IA, próximamente.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxsaW5lIHgxPSIxNiIgeTE9IjkiIHgyPSIxNiIgeTI9IjIzIiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkiIHkxPSIxNiIgeDI9IjIzIiB5Mj0iMTYiIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --bg: #0F1717;
+    --bg-alt: #16211F;
+    --bg-alt-2: #1C2A27;
+    --ink: #ECEEE8;
+    --ink-dim: #9FAEA7;
+    --ink-faint: #56655F;
+    --accent: #E8A33D;
+    --accent-2: #4FA98B;
+    --line: rgba(236,238,232,0.14);
+    --line-soft: rgba(236,238,232,0.07);
+
+    --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scrollbar-color: var(--ink-faint) transparent; }
+
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection{ background: var(--accent); color: #221604; }
+
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ambient backdrop: fine grid + generated grain, both fixed & inert */
+  .bg-grid{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+  }
+
+  .bg-grain{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+    background-repeat: repeat;
+    background-size: 96px 96px;
+  }
+
+  .bg-glow{
+    position: fixed;
+    top: -12%;
+    left: 50%;
+    width: min(900px, 140vw);
+    height: 520px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(closest-side, rgba(232,163,61,0.10), rgba(232,163,61,0) 70%);
+  }
+
+  .regmark{
+    position: fixed;
+    width: 13px;
+    height: 13px;
+    z-index: 0;
+    opacity: 0.4;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 100% 1px no-repeat,
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 1px 100% no-repeat;
+  }
+  .regmark.tl{ top: 16px; left: 16px; }
+  .regmark.tr{ top: 16px; right: 16px; }
+  .regmark.bl{ bottom: 16px; left: 16px; }
+  .regmark.br{ bottom: 16px; right: 16px; }
+
+  @media (max-width: 520px){
+    .regmark{ display: none; }
+  }
+
+  .page{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5.5rem) 1.5rem clamp(3rem, 8vw, 5rem);
+  }
+
+  .page > *{ position: relative; z-index: 1; }
+
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin: 0 0 1.7rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.05s forwards;
+  }
+
+  .eyebrow::before{
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(79,169,139,0.18);
+    flex: none;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-style: normal;
+    font-size: clamp(2.7rem, 8.5vw, 4.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 0.7rem;
+    opacity: 0;
+    animation: rise 0.7s ease-out 0.16s forwards;
+  }
+
+  .url-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.32rem 0.85rem 0.32rem 0.7rem;
+    margin: 0 0 1.15rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.28s forwards;
+  }
+
+  .url-chip::before{
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  .marginalia{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 440;
+    font-size: 1.15rem;
+    color: var(--ink-dim);
+    max-width: 30em;
+    margin: 0 0 1.8rem;
+    text-wrap: balance;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.38s forwards;
+  }
+
+  .lede{
+    font-size: 1.08rem;
+    line-height: 1.62;
+    color: var(--ink);
+    max-width: 34em;
+    margin: 0 0 0.85rem;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.48s forwards;
+  }
+
+  .lede + .lede{
+    color: var(--ink-dim);
+    font-size: 0.98rem;
+    margin: 0;
+    animation-delay: 0.58s;
+  }
+
+  .status{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55em;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+    background: rgba(232,163,61,0.08);
+    border: 1px solid rgba(232,163,61,0.3);
+    padding: 0.42rem 0.85rem 0.42rem 0.7rem;
+    border-radius: 3px;
+    margin: 1.7rem 0 0;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.7s forwards;
+  }
+
+  .status::before{
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  .divider{
+    height: 1px;
+    background: var(--line);
+    margin: clamp(2.6rem, 6vw, 3.4rem) 0 clamp(2.2rem, 5vw, 2.8rem);
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.78s forwards;
+  }
+
+  .log{
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--bg-alt);
+    box-shadow: 0 1px 0 0 var(--line-soft) inset, 0 14px 40px -18px rgba(0,0,0,0.55);
+    overflow: hidden;
+    opacity: 0;
+    animation: rise 0.6s ease-out 0.86s forwards;
+  }
+
+  .log-head{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-alt-2);
+  }
+
+  .log-dots{
+    display: flex;
+    gap: 6px;
+    flex: none;
+  }
+
+  .log-dots span{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+
+  .log-head-title{
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-dim);
+  }
+
+  .log-body{
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    line-height: 1.95;
+    padding: 0.9rem 0.4rem 1.15rem;
+  }
+
+  .log-row{
+    display: grid;
+    grid-template-columns: 5.6em 1fr;
+    gap: 0 0.9em;
+    align-items: baseline;
+    padding: 0.28rem 0.75rem;
+    margin: 0 0.35rem;
+    border-radius: 4px;
+    opacity: 0;
+    animation: entry 0.5s ease-out forwards;
+    transition: background-color 0.15s ease;
+  }
+
+  .log-row:hover{ background: var(--line-soft); }
+
+  .log-row:nth-child(1){ animation-delay: 1s; }
+  .log-row:nth-child(2){ animation-delay: 1.14s; }
+  .log-row:nth-child(3){ animation-delay: 1.28s; }
+  .log-row:nth-child(4){ animation-delay: 1.42s; }
+
+  .tag{
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    padding: 0.08em 0.5em;
+    border-radius: 3px;
+    width: fit-content;
+    text-transform: lowercase;
+  }
+
+  .tag.done{
+    color: var(--accent-2);
+    background: rgba(79,169,139,0.12);
+    border: 1px solid rgba(79,169,139,0.32);
+  }
+
+  .tag.queued{
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px dashed var(--ink-faint);
+  }
+
+  .log-msg{ color: var(--ink); }
+  .log-row:has(.queued) .log-msg{ color: var(--ink-dim); }
+
+  .log-msg .meta{
+    color: var(--ink-dim);
+    font-size: 0.78em;
+  }
+
+  .cursor-line{
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin: 0.5rem 0.75rem 0;
+    padding: 0.28rem 0;
+    color: var(--ink-dim);
+    opacity: 0;
+    animation: rise 0.5s ease-out 1.6s forwards;
+  }
+
+  .cursor{
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+    animation-delay: 1.65s;
+  }
+
+  footer{
+    margin-top: clamp(2.6rem, 6vw, 3.2rem);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-dim);
+    opacity: 0;
+    animation: rise 0.6s ease-out 1.55s forwards;
+  }
+
+  @keyframes rise{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes entry{
+    from{ opacity: 0; transform: translateX(-6px); }
+    to{ opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pulse{
+    0%, 100%{ opacity: 1; box-shadow: 0 0 0 0 rgba(232,163,61,0.35); }
+    50%{ opacity: 0.7; box-shadow: 0 0 0 4px rgba(232,163,61,0); }
+  }
+
+  @keyframes blink{
+    0%, 100%{ opacity: 1; }
+    50%{ opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .eyebrow, h1, .url-chip, .marginalia, .lede, .status, .divider, .log, .log-row, .cursor-line, footer{
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  @media (max-width: 460px){
+    .log-row{ grid-template-columns: 1fr; gap: 0.2em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="bg-grain" id="bg-grain" aria-hidden="true"></div>
+<span class="regmark tl" aria-hidden="true"></span>
+<span class="regmark tr" aria-hidden="true"></span>
+<span class="regmark bl" aria-hidden="true"></span>
+<span class="regmark br" aria-hidden="true"></span>
+
+<main class="page">
+  <p class="eyebrow">casa perez — building in public</p>
+
+  <h1>Lorenzo Perez</h1>
+
+  <p class="url-chip">justperez.uk</p>
+
+  <p class="marginalia">notas de un portfolio que recién arranca.</p>
+
+  <p class="lede">Este va a ser mi portfolio, pero todavía no tengo nada terminado para mostrar.</p>
+  <p class="lede">Por ahora esto es lo que hay: el dominio andando y la intención de ir subiendo experimentos con IA a medida que los vaya armando.</p>
+
+  <span class="status">en construcción — v0.1.0</span>
+
+  <div class="divider"></div>
+
+  <section class="log" aria-label="registro del sitio">
+    <div class="log-head">
+      <span class="log-dots"><span></span><span></span><span></span></span>
+      <span class="log-head-title">casa-perez/log</span>
+    </div>
+    <div class="log-body">
+      <div class="log-row">
+        <span class="tag done">listo</span>
+        <span class="log-msg">sitio publicado <span class="meta">— 04 sep 2026</span></span>
+      </div>
+      <div class="log-row">
+        <span class="tag queued">próximo</span>
+        <span class="log-msg">conectar el dominio justperez.uk</span>
+      </div>
+      <div class="log-row">
+        <span class="tag queued">próximo</span>
+        <span class="log-msg">primer experimento con IA</span>
+      </div>
+      <div class="log-row">
+        <span class="tag queued">próximo</span>
+        <span class="log-msg">portfolio de verdad, con proyectos de verdad</span>
+      </div>
+      <p class="cursor-line">esperando el próximo commit <span class="cursor" aria-hidden="true"></span></p>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Lorenzo Perez</span>
+    <span>justperez.uk</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+  // generated grain texture — drawn once, no motion
+  try{
+    var size = 96;
+    var c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    var ctx = c.getContext('2d');
+    var img = ctx.createImageData(size, size);
+    for (var i = 0; i < img.data.length; i += 4){
+      var v = Math.random() * 255;
+      img.data[i] = v; img.data[i+1] = v; img.data[i+2] = v;
+      img.data[i+3] = Math.random() * 22;
+    }
+    ctx.putImageData(img, 0, 0);
+    var layer = document.getElementById('bg-grain');
+    if (layer) layer.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
