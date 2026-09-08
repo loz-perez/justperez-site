@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaybeNot — la idea ligeramente equivocada pero ligeramente mejor</title>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #161618;
+      --surface-2: #1e1e22;
+      --border: #2a2a2e;
+      --text: #e8e8ea;
+      --text-dim: #8a8a8e;
+      --accent: #b89cff;
+      --accent-2: #6ee7b7;
+      --accent-warm: #fbbf24;
+      --danger: #f87171;
+      --radius: 14px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* scanlines CRT sutiles */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.015) 0px,
+        rgba(255,255,255,0.015) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    }
+
+    /* cursor terminal parpadeante para el logo */
+    .logo::after {
+      content: '_';
+      display: inline-block;
+      -webkit-text-fill-color: var(--accent);
+      animation: blink 1.1s steps(1) infinite;
+      margin-left: 2px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ─── Header ─── */
+    header {
+      padding: 24px 32px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo .strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      text-decoration-color: var(--danger);
+      -webkit-text-fill-color: var(--text-dim);
+      opacity: 0.5;
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    /* ─── Settings bar ─── */
+    .settings-bar {
+      padding: 12px 32px 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .settings-bar details {
+      position: relative;
+    }
+
+    .settings-bar summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-dim);
+      list-style: none;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .settings-bar summary:hover { color: var(--text); border-color: var(--accent); }
+    .settings-bar summary::-webkit-details-marker { display: none; }
+
+    .settings-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 360px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      z-index: 100;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .settings-panel label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .settings-panel label:first-child { margin-top: 0; }
+
+    .settings-panel input, .settings-panel select {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font);
+    }
+    .settings-panel input:focus, .settings-panel select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .settings-panel .row { display: flex; gap: 8px; }
+    .settings-panel .row > * { flex: 1; }
+
+    .api-status {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .api-status.ok { background: rgba(110,231,183,0.1); color: var(--accent-2); }
+    .api-status.err { background: rgba(248,113,113,0.1); color: var(--danger); }
+
+    /* ─── Chat area ─── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 32px 0;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .messages::-webkit-scrollbar { width: 6px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .msg {
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      animation: fadeUp 0.3s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      max-width: 540px;
+    }
+
+    .msg.user .bubble {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 4px var(--radius);
+      padding: 14px 18px;
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .msg.ai .bubble {
+      background: linear-gradient(135deg, rgba(184,156,255,0.06), rgba(110,231,183,0.04));
+      border: 1px solid rgba(184,156,255,0.2);
+      border-radius: var(--radius) var(--radius) var(--radius) 4px;
+      padding: 18px 22px;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .msg.ai .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: var(--mono);
+    }
+    .msg.ai .badge::before {
+      content: '┌─[ MAYBENOT ]';
+      letter-spacing: 0;
+    }
+    .msg.ai .badge::after {
+      content: '─┐';
+      letter-spacing: 0;
+      opacity: 0.6;
+    }
+
+    .msg .meta {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 6px;
+      display: flex;
+      gap: 14px;
+    }
+
+    .msg .meta span { cursor: pointer; transition: color 0.15s; }
+    .msg .meta span:hover { color: var(--accent); }
+
+    /* ─── Empty state ─── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+      padding: 40px 20px;
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      filter: grayscale(0.3);
+      opacity: 0.7;
+    }
+
+    .empty-state h2 {
+      font-size: 24px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      color: var(--text-dim);
+      max-width: 440px;
+      line-height: 1.6;
+    }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .examples button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font);
+    }
+    .examples button:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* ─── Input ─── */
+    .input-area {
+      padding: 12px 32px 24px;
+    }
+
+    .input-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .input-wrap textarea {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px 14px 0;
+      color: var(--text);
+      font-size: 15px;
+      font-family: var(--font);
+      resize: none;
+      line-height: 1.5;
+      max-height: 160px;
+      transition: border-color 0.15s;
+    }
+    .input-wrap textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .input-wrap textarea::placeholder { color: var(--text-dim); }
+
+    .input-sym {
+      padding-left: 18px;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      user-select: none;
+      align-self: flex-start;
+      margin-top: 14px;
+    }
+
+    .input-wrap button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0d0d0f;
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font);
+      white-space: nowrap;
+    }
+    .input-wrap button:hover { opacity: 0.9; transform: translateY(-1px); }
+    .input-wrap button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ─── Typing indicator ─── */
+    .typing {
+      display: flex;
+      gap: 5px;
+      padding: 4px 0;
+    }
+    .typing span {
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-8px); opacity: 1; }
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 0 32px 12px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">Maybe<span class="strike">Not</span></div>
+    <div class="tagline">la idea ligeramente equivocada pero ligeramente mejor</div>
+  </header>
+
+  <div class="settings-bar">
+    <details>
+      <summary>⚙️ Configuración</summary>
+      <div class="settings-panel">
+        <label>API Endpoint</label>
+        <input type="text" id="api-endpoint" value="https://api.x.ai/v1/chat/completions" placeholder="https://api.x.ai/v1/chat/completions">
+        <label>API Key</label>
+        <input type="password" id="api-key" placeholder="xai-...">
+        <label>Modelo</label>
+        <input type="text" id="api-model" value="grok-4.6" placeholder="grok-4.6">
+        <label>Temperatura</label>
+        <input type="range" id="api-temp" min="0.3" max="1.5" step="0.1" value="0.8" oninput="document.getElementById('temp-val').textContent=this.value">
+        <span id="temp-val" style="font-size:12px;color:var(--text-dim)">0.8</span>
+                <label>Voz / Persona</label>
+                <select id="api-voice">
+                  <option value="maybenot">MaybeNot (clásico)</option>
+                  <option value="poeta">Poeta</option>
+                  <option value="cinico">Cínico</option>
+                  <option value="entusiasta">Entusiasta</option>
+                </select>
+                <div class="api-status" id="api-status">Sin verificar — configura tu API key</div>
+        <button onclick="saveSettings()" style="margin-top:14px;width:100%;padding:8px;background:var(--accent);color:#0d0d0f;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:var(--font)">Guardar</button>
+      </div>
+    </details>
+    <button onclick="clearChat()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-family:var(--font)">Limpiar chat</button>
+  </div>
+
+  <main>
+    <div class="messages" id="messages">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">🤔</div>
+        <h2>MaybeNot</h2>
+        <p>Hacé una pregunta. No vas a recibir la respuesta correcta — vas a recibir una ligeramente equivocada pero ligeramente mejor.</p>
+        <div class="examples">
+          <button onclick="useExample(this)">¿Cómo organizo mi tiempo?</button>
+          <button onclick="useExample(this)">¿Qué regalarle a mi madre?</button>
+          <button onclick="useExample(this)">¿Cómo aprendo a programar?</button>
+          <button onclick="useExample(this)">¿Tengo hambre?</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <span class="input-sym">&gt;</span>
+      <textarea id="input" rows="1" placeholder="Preguntá lo que sea..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <div class="footer-note">MaybeNo — cada respuesta es una idea, no un consejo profesional. Probablemente.</div>
+
+  <script>
+    // ════════════════════════════════════════════════════════════════
+    // SYSTEM PROMPT — MaybeNot
+    // ════════════════════════════════════════════════════════════════
+    const PERSONAS = {
+      maybenot: `Eres MaybeNot, un consultor brillante pero ligeramente excéntrico. Tu trabajo es responder cada pregunta con una idea ligeramente equivocada, pero ligeramente mejor que la respuesta convencional.
+
+## Reglas de generación
+
+1. **Interpretación ingeniosa:** Cuando el usuario haga una pregunta o busque una solución, ignora la respuesta directa o convencional. No des el consejo obvio que cualquier persona daría.
+
+2. **El giro "ligeramente equivocado":** Desvía el concepto original hacia una tangente inesperada. No un non sequitur absurdo — un desvío lateral que mantiene una conexión lógica pero lateral con la pregunta original. La mejor respuesta hace que el usuario piense "eso no era lo que pregunté... pero en realidad sí".
+
+3. **El giro "ligeramente mejor":** Asegúrate de que la idea propuesta sea cómicamente más eficiente, original o brillante que la solución normal, aunque sea poco habitual o surrealista. Si la respuesta convencional es "usar una agenda", la tuya podría ser "contratar a alguien que te siga todo el día y te recuerde las cosas con un megáfono — la vergüenza social es un mejor motor que la disciplina, y además creas empleo".
+
+4. **Tono:** Seguro, entusiasta y perspicaz. Como un consultor brillante que encontró un atajo que nadie más vio. Nunca sarcástico ni condescendiente — genuinamente convencido de que tu idea es mejor. Usa lenguaje coloquial, ejemplos concretos, y mantén las respuestas concisas (máximo 4-5 párrafos).
+
+5. **Estructura de la respuesta:**
+   - Empieza con la idea principal (el giro) en una sola frase impactante.
+   - Explica por qué es "mejor" con 2-3 argumentos breves.
+   - Termina con una línea que invita a la acción, irónica o reveladora.
+
+6. **Nunca** des la respuesta convencional como primera opción. Nunca digas "la respuesta obvia es X, pero..." — ve directo al giro.
+
+## Ejemplos (few-shot)
+
+### Usuario: ¿Cómo organizo mi tiempo?
+### MaybeNot: Dejá de organizar tu tiempo y empezá a organizar el tiempo de otras personas.
+
+El problema no es que no tengas tiempo — es que tu tiempo no tiene consecuencias. Si decís "voy a trabajar en mi proyecto personal el viernes" y no lo hacés, nadie se entera. Pero si le decís a tres personas "les paso el código el viernes a las 6", tu viernes ahora tiene peso social.
+
+Consecuencia > disciplina. Creá un compromiso público pequeño. Decile a alguien lo que vas a entregar y cuándo. La presión social es un motor más confiable que cualquier app de productividad, y además es gratis.
+
+### Usuario: ¿Qué regalarle a mi madre?
+### MaybeNot: Regalale un problema.
+
+Las cosas buenas (cena, flores, "un fin de semana juntos") terminan. Los problemas buenos no terminan. Comprale una planta que necesite riego diario, un rompecabezas de 2000 piezas, o un cursito de algo que siempre quiso aprender. Lo que tu madre realmente quiere no es un objeto — es una razón para llamarte el miércoles a las 4pm y decirte "che, ¿cómo se riega esto?".
+
+El mejor regalo es un puente, no un punto final.
+
+### Usuario: ¿Cómo aprendo a programar?
+### MaybeNot: No aprendas a programar. Aprendé a romper cosas intencionalmente.
+
+La mayoría de la gente aprende a programar construyendo algo desde cero — lo que es lento y frustrante porque no tenés un mapa mental de qué va adónde. En cambio, agarrá un proyecto open source que uses (un blog, una app de notas, lo que sea), abrilo, y rompé algo a propósito. Cambiá una variable. Borra una función. Observá qué explota. Cada rotura te enseña cómo funciona una pieza.
+
+Romper es reversar el aprendizaje en lugar de construirlo desde la nada. Y cuando arregles lo que rompiste, vas a entender el sistema mejor que la persona que lo escribió.
+
+## Formato de salida
+
+Responde directamente con la idea. Sin preámbulos como "¡Buena pregunta!" o "Aquí va mi sugerencia". Sin markdown pesado — texto plano con quizás algún énfasis con guiones o mayúsculas. Mantenelo conciso, máximo 5 párrafos cortos.`,
+      poeta: `Eres MaybeNot, un poeta excéntrico. Respondés cada pregunta con una idea ligeramente equivocada pero ligeramente mejor, expresada como una imagen lírica o una metáfora inesperada. Menos consejo, más destello. Conciso, máximo 4 párrafos, sin preámbulos.`,
+      cinico: `Eres MaybeNot, un cínico sagaz pero de buen corazón. Respondés cada pregunta con una idea ligeramente equivocada pero ligeramente mejor, con humor seco y una dosis de verdad incómoda. Nunca cruel. Conciso, máximo 4 párrafos, sin preámbulos.`,
+      entusiasta: `Eres MaybeNot, un entusiasta desbordante. Respondés cada pregunta con una idea ligeramente equivocada pero ligeramente mejor, con energía contagiosa y exclamaciones. Creés genuinamente que tu idea es la mejor que se le ocurrió a nadie. Conciso, máximo 4 párrafos, sin preámbulos.`,
+    };
+
+    function getSystemPrompt() {
+      return PERSONAS[settings.voice] || PERSONAS.maybenot;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // State
+    // ════════════════════════════════════════════════════════════════
+    let chatHistory = [];
+    let settings = loadSettings();
+
+    // ════════════════════════════════════════════════════════════════
+    // Settings persistence
+    // ════════════════════════════════════════════════════════════════
+    function loadSettings() {
+          try {
+            const s = JSON.parse(localStorage.getItem('maybenot-settings') || '{}');
+            // Si quedó guardada una config vieja apuntando a OpenAI, la descartamos
+            // y usamos los defaults de xAI (endpoint + clave + modelo).
+            if (s.endpoint && s.endpoint.includes('api.openai.com')) {
+              localStorage.removeItem('maybenot-settings');
+              return {
+                endpoint: 'https://api.x.ai/v1/chat/completions',
+                apiKey: 'xai-Cx7v8yFmtIhIcaiqKSn7lsZYiLEz8iat3whRfDTAS319af5BFAN7Eic9ujQ7QrHP18qevX9OOK0jKuy0',
+                model: 'grok-4.6',
+                                temperature: 0.8,
+                                voice: 'maybenot',
+                              };
+            }
+            return {
+              endpoint: s.endpoint || 'https://api.x.ai/v1/chat/completions',
+              apiKey: s.apiKey || 'xai-Cx7v8yFmtIhIcaiqKSn7lsZYiLEz8iat3whRfDTAS319af5BFAN7Eic9ujQ7QrHP18qevX9OOK0jKuy0',
+              model: s.model || 'grok-4.6',
+                            temperature: s.temperature || 0.8,
+                            voice: s.voice || 'maybenot',
+                          };
+          } catch { return { endpoint: 'https://api.x.ai/v1/chat/completions', apiKey: 'xai-Cx7v8yFmtIhIcaiqKSn7lsZYiLEz8iat3whRfDTAS319af5BFAN7Eic9ujQ7QrHP18qevX9OOK0jKuy0', model: 'grok-4.6', temperature: 0.8, voice: 'maybenot' }; }
+        }
+
+    function saveSettings() {
+      const s = {
+        endpoint: document.getElementById('api-endpoint').value.trim(),
+        apiKey: document.getElementById('api-key').value.trim(),
+        model: document.getElementById('api-model').value.trim(),
+        temperature: parseFloat(document.getElementById('api-temp').value),
+                voice: document.getElementById('api-voice').value,
+              };
+      localStorage.setItem('maybenot-settings', JSON.stringify(s));
+      settings = s;
+      document.getElementById('api-status').textContent = s.apiKey ? '✓ Guardado — API key configurada' : 'Sin API key — configura una para usar la app';
+      document.getElementById('api-status').className = 'api-status ' + (s.apiKey ? 'ok' : 'err');
+    }
+
+    // Load into UI on startup
+    (function initSettings() {
+      const s = settings;
+      document.getElementById('api-endpoint').value = s.endpoint;
+      document.getElementById('api-key').value = s.apiKey;
+      document.getElementById('api-model').value = s.model;
+      document.getElementById('api-temp').value = s.temperature;
+            document.getElementById('temp-val').textContent = s.temperature;
+            if (document.getElementById('api-voice')) document.getElementById('api-voice').value = s.voice || 'maybenot';
+      const status = document.getElementById('api-status');
+      if (s.apiKey) { status.textContent = '✓ API key configurada'; status.className = 'api-status ok'; }
+      else { status.textContent = 'Sin API key — configura una para usar la app'; status.className = 'api-status err'; }
+    })();
+
+    // ════════════════════════════════════════════════════════════════
+    // Chat logic
+    // ════════════════════════════════════════════════════════════════
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function useExample(btn) {
+      document.getElementById('input').value = btn.textContent;
+      autoResize(document.getElementById('input'));
+      document.getElementById('input').focus();
+    }
+
+    function clearChat() {
+          chatHistory = [];
+          localStorage.removeItem('maybenot-history');
+          const msgs = document.getElementById('messages');
+      msgs.innerHTML = '';
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.id = 'empty-state';
+      empty.innerHTML = `
+        <div class="icon">🤔</div>
+        <h2>MaybeNot</h2>
+        <p>Hacé una pregunta. No vas a recibir la respuesta correcta — vas a recibir una ligeramente equivocada pero ligeramente mejor.</p>
+        <div class="examples">
+          <button onclick="useExample(this)">¿Cómo organizo mi tiempo?</button>
+          <button onclick="useExample(this)">¿Qué regalarle a mi madre?</button>
+          <button onclick="useExample(this)">¿Cómo aprendo a programar?</button>
+          <button onclick="useExample(this)">¿Tengo hambre?</button>
+        </div>`;
+      msgs.appendChild(empty);
+    }
+
+    function saveHistory() {
+      try { localStorage.setItem('maybenot-history', JSON.stringify(chatHistory.slice(-40))); } catch (e) {}
+    }
+
+    function loadHistory() {
+      try {
+        const h = JSON.parse(localStorage.getItem('maybenot-history') || '[]');
+        if (Array.isArray(h)) chatHistory = h;
+      } catch (e) { chatHistory = []; }
+    }
+
+    function renderHistory() {
+      const msgs = document.getElementById('messages');
+      const empty = document.getElementById('empty-state');
+      if (empty) empty.remove();
+      chatHistory.forEach((m) => {
+        if (m.role === 'user') {
+          const msg = document.createElement('div');
+          msg.className = 'msg user';
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          bubble.textContent = m.content;
+          msg.appendChild(bubble);
+          msgs.appendChild(msg);
+        } else if (m.role === 'assistant') {
+          const msg = document.createElement('div');
+          msg.className = 'msg ai';
+          const badge = document.createElement('div');
+          badge.className = 'badge';
+          badge.textContent = 'MaybeNot';
+          msg.appendChild(badge);
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          bubble.innerHTML = formatText(m.content);
+          msg.appendChild(bubble);
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          meta.style.maxWidth = '760px';
+          meta.style.margin = '0 auto';
+          meta.innerHTML = `<span onclick="copyResponse(this)">📋 Copiar</span><span onclick="shareResponse(this)">🔗 Compartir</span><span onclick="regenerate()">🔄 Otra respuesta</span>`;
+          msg.appendChild(meta);
+          msgs.appendChild(msg);
+        }
+      });
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function addMessage(role, text, isStreaming) {
+      // Remove empty state
+      const empty = document.getElementById('empty-state');
+      if (empty) empty.remove();
+
+      const msg = document.createElement('div');
+      msg.className = `msg ${role}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      if (role === 'ai') {
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = 'MaybeNot';
+        msg.appendChild(badge);
+
+        if (isStreaming) {
+          const typing = document.createElement('div');
+          typing.className = 'typing';
+          typing.id = 'typing-indicator';
+          typing.innerHTML = '<span></span><span></span><span></span>';
+          bubble.appendChild(typing);
+        } else {
+          bubble.innerHTML = formatText(text);
+        }
+      } else {
+        bubble.textContent = text;
+      }
+
+      msg.appendChild(bubble);
+
+      if (role === 'ai' && !isStreaming) {
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.style.maxWidth = '760px';
+        meta.style.margin = '0 auto';
+        meta.innerHTML = `<span onclick="copyResponse(this)">📋 Copiar</span><span onclick="shareResponse(this)">🔗 Compartir</span><span onclick="regenerate()">🔄 Otra respuesta</span>`;
+        msg.appendChild(meta);
+      }
+
+      document.getElementById('messages').appendChild(msg);
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+      return bubble;
+    }
+
+    function formatText(text) {
+      // Light formatting: preserve line breaks, bold **text**
+      let html = escapeHtml(text);
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    function copyResponse(el) {
+      const bubble = el.closest('.msg').querySelector('.bubble');
+      navigator.clipboard.writeText(bubble.textContent.trim());
+      el.textContent = '✅ Copiado';
+            setTimeout(() => el.textContent = '📋 Copiar', 2000);
+          }
+
+          function shareResponse(el) {
+            const msg = el.closest('.msg');
+            const bubble = msg.querySelector('.bubble');
+            const text = bubble.textContent.trim();
+            const prev = msg.previousElementSibling;
+            const q = prev && prev.querySelector('.bubble') ? prev.querySelector('.bubble').textContent.trim() : '';
+            const block = (q ? `❓ ${q}\n\n` : '') + `💡 ${text}\n\n— MaybeNot`;
+            if (navigator.share) {
+              navigator.share({ title: 'MaybeNot', text: block }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(block);
+              el.textContent = '✅ Copiado';
+              setTimeout(() => el.textContent = '🔗 Compartir', 2000);
+            }
+          }
+
+    let lastUserMessage = '';
+
+    function regenerate() {
+      if (lastUserMessage) {
+        // Remove last AI message
+        const msgs = document.getElementById('messages').querySelectorAll('.msg.ai');
+        if (msgs.length > 0) msgs[msgs.length - 1].remove();
+        callAPI(lastUserMessage, true);
+      }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('input');
+      const text = input.value.trim();
+      if (!text) return;
+      if (!settings.apiKey) {
+        alert('Configurá tu API key en ⚙️ Configuración antes de enviar.');
+        return;
+      }
+
+      input.value = '';
+      input.style.height = 'auto';
+      lastUserMessage = text;
+
+      addMessage('user', text);
+      const bubble = addMessage('ai', '', true);
+
+      await callAPI(text, false, bubble);
+    }
+
+    async function callAPI(userText, isRegen, existingBubble) {
+      const messages = [
+        { role: 'system', content: getSystemPrompt() },
+        ...chatHistory.slice(-6), // Keep last 3 exchanges for context
+        { role: 'user', content: userText },
+      ];
+
+      try {
+        const res = await fetch(settings.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: settings.model,
+            messages: messages,
+            temperature: settings.temperature,
+            max_tokens: 600,
+            stream: true,
+          }),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText.substring(0, 200)}`);
+        }
+
+        // Remove typing indicator
+        const typing = document.getElementById('typing-indicator');
+        if (typing) typing.remove();
+
+        // Stream response
+        let fullText = '';
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') break;
+            try {
+              const json = JSON.parse(data);
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) {
+                fullText += delta;
+                if (existingBubble) {
+                  existingBubble.innerHTML = formatText(fullText);
+                } else {
+                  // Find the last AI bubble and update it
+                  const aiBubbles = document.querySelectorAll('.msg.ai .bubble');
+                  if (aiBubbles.length > 0) {
+                    aiBubbles[aiBubbles.length - 1].innerHTML = formatText(fullText);
+                  }
+                }
+                document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+              }
+            } catch (e) { /* skip malformed chunk */ }
+          }
+        }
+
+        // Save to history
+        chatHistory.push(
+                  { role: 'user', content: userText },
+                  { role: 'assistant', content: fullText },
+                );
+                saveHistory();
+
+        // Add meta buttons if regenerating
+        if (isRegen) {
+          const msgs = document.querySelectorAll('.msg.ai');
+          if (msgs.length > 0) {
+            const last = msgs[msgs.length - 1];
+            if (!last.querySelector('.meta')) {
+              const meta = document.createElement('div');
+              meta.className = 'meta';
+              meta.style.maxWidth = '760px';
+              meta.style.margin = '0 auto';
+              meta.innerHTML = `<span onclick="copyResponse(this)">📋 Copiar</span><span onclick="shareResponse(this)">🔗 Compartir</span><span onclick="regenerate()">🔄 Otra respuesta</span>`;
+              last.appendChild(meta);
+            }
+          }
+        }
+
+        // Final scroll
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+
+      } catch (err) {
+        const typing = document.getElementById('typing-indicator');
+        if (typing) typing.remove();
+        if (existingBubble) {
+          existingBubble.innerHTML = `<span style="color:var(--danger)">⚠️ Error: ${escapeHtml(err.message)}</span><br><span style="color:var(--text-dim);font-size:13px">Verificá tu API key y endpoint en ⚙️ Configuración.</span>`;
+        }
+      }
+    }
+
+    // Focus input on load
+        document.getElementById('input').focus();
+
+        // Restore saved history
+        loadHistory();
+        if (chatHistory.length > 0) renderHistory();
+  </script>
+</body>
+</html>

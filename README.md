@@ -11,5 +11,6 @@ casa-perez/log
 [listo]    dominio conectado
 [listo]    cohetes que aprenden — algoritmo genético en /cohetes
 [listo]    datos curiosos — API real en /datos
+[listo]    maybeNot — la idea ligeramente equivocada pero mejor, en /maybenot
 [próximo]  portfolio de verdad, con proyectos de verdad
 ```
