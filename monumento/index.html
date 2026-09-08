@@ -159,6 +159,17 @@
     margin-bottom: 1.3rem; overflow: hidden;
   }
   .statue svg{ width: 62%; height: 100%; }
+  .statue img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .statue .loading{
+    font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-dim);
+    display: flex; flex-direction: column; align-items: center; gap: 0.8rem; text-align: center;
+  }
+  .statue .loading .spinner{
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--line); border-top-color: var(--accent);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
 
   .plaque{
     border-left: 3px solid var(--accent); background: var(--bg-alt-2);
@@ -364,47 +375,87 @@
     };
   }
 
-  // ---- statue drawing ----
-  function drawStatue(subject){
-    var el = document.getElementById('statue');
-    var seed = 0;
-    for (var i = 0; i < subject.length; i++) seed = (seed * 31 + subject.charCodeAt(i)) % 100000;
-    var rand = mulberry(seed);
+  // ---- AI image generation ----
+  var API_KEY = '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';
+  var IMAGE_MODEL = 'bytedance-seed/seedream-5-0-lite';
 
-    var pedestalH = 26;
-    var baseY = 100 - pedestalH;
-    var bodyH = 34 + rand() * 14;
-    var headR = 7 + rand() * 3;
-    var armW = 4 + rand() * 3;
-    var armUp = rand() > 0.4;
-
-    var svg = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">';
-    // pedestal
-    svg += '<rect x="26" y="' + baseY + '" width="48" height="' + pedestalH + '" rx="1" fill="rgba(236,238,232,0.16)"/>';
-    svg += '<rect x="30" y="' + (baseY + 6) + '" width="40" height="3" fill="rgba(232,163,61,0.5)"/>';
-    // body
-    svg += '<rect x="' + (50 - bodyH/2) + '" y="' + (baseY - bodyH) + '" width="' + bodyH + '" height="' + bodyH + '" rx="' + (bodyH/3) + '" fill="rgba(236,238,232,0.28)"/>';
-    // arms
-    if (armUp){
-      svg += '<rect x="' + (50 + bodyH/2 - 2) + '" y="' + (baseY - bodyH + 6) + '" width="' + armW + '" height="' + (bodyH*0.6) + '" rx="2" fill="rgba(236,238,232,0.28)" transform="rotate(-35 ' + (50 + bodyH/2) + ' ' + (baseY - bodyH + 6) + ')"/>';
-    } else {
-      svg += '<rect x="' + (50 + bodyH/2 - 2) + '" y="' + (baseY - bodyH*0.4) + '" width="' + armW + '" height="' + (bodyH*0.55) + '" rx="2" fill="rgba(236,238,232,0.28)"/>';
-    }
-    svg += '<rect x="' + (50 - bodyH/2 - armW + 2) + '" y="' + (baseY - bodyH*0.4) + '" width="' + armW + '" height="' + (bodyH*0.55) + '" rx="2" fill="rgba(236,238,232,0.28)"/>';
-    // head
-    svg += '<circle cx="50" cy="' + (baseY - bodyH - headR - 2) + '" r="' + headR + '" fill="rgba(236,238,232,0.42)"/>';
-    svg += '</svg>';
-
-    el.innerHTML = svg;
+  function buildPrompt(m){
+    var s = m.subject;
+    var material = m.material;
+    return 'A comical public monument statue in a small town plaza, photorealistic, golden hour light. ' +
+      'The monument is a ' + material + ' statue commemorating "' + s + '" in a grand civic memorial style, ' +
+      'on a tiered stone pedestal with an engraved plaque. The subject is treated with absurd solemnity, ' +
+      'as if it were a great historical hero. Tourists photograph it, locals admire it. Whimsical, humorous, ' +
+      'high detail, sharp focus.';
   }
 
-  function mulberry(a){
-    return function(){
-      a |= 0; a = a + 0x6D2B79F5 | 0;
-      var t = Math.imul(a ^ a >>> 15, 1 | a);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    };
+  function imageKey(m){
+    return 'monumento-v1-' + m.subject;
+  }
+
+  function loadCachedImage(m){
+    try{
+      var k = imageKey(m);
+      var obj = JSON.parse(localStorage.getItem('monumento-img-v1') || '{}');
+      if (obj[k]) return obj[k];
+    } catch(e){}
+    return null;
+  }
+
+  function cacheImage(m, b64){
+    try{
+      var k = imageKey(m);
+      var obj = JSON.parse(localStorage.getItem('monumento-img-v1') || '{}');
+      obj[k] = b64;
+      localStorage.setItem('monumento-img-v1', JSON.stringify(obj));
+    } catch(e){}
+  }
+
+  function generateImage(m){
+    return new Promise(function(resolve, reject){
+      var el = document.getElementById('statue');
+      el.innerHTML = '<div class="loading"><div class="spinner"></div><span>esculpiendo mármol…</span></div>';
+
+      var cached = loadCachedImage(m);
+      if (cached){
+        el.innerHTML = '<img src="data:image/jpeg;base64,' + cached + '" alt="Monumento generado">';
+        resolve();
+        return;
+      }
+
+      var body = {
+        model: IMAGE_MODEL,
+        prompt: buildPrompt(m),
+        aspect_ratio: '3:2',
+        resolution: '2K'
+      };
+
+      fetch('https://openrouter.ai/api/v1/images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + API_KEY
+        },
+        body: JSON.stringify(body)
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.data && d.data[0] && d.data[0].b64_json){
+          var b64 = d.data[0].b64_json;
+          cacheImage(m, b64);
+          el.innerHTML = '<img src="data:image/jpeg;base64,' + b64 + '" alt="Monumento generado">';
+          resolve();
+        } else {
+          var msg = (d && d.error && d.error.message) ? d.error.message : 'respuesta inesperada';
+          el.innerHTML = '<div class="loading"><span>no se pudo esculpir: ' + msg + '</span></div>';
+          reject(new Error(msg));
+        }
+      })
+      .catch(function(err){
+        el.innerHTML = '<div class="loading"><span>error de red al esculpir</span></div>';
+        reject(err);
+      });
+    });
   }
 
   // ---- render ----
@@ -418,7 +469,7 @@
     document.getElementById('m-material').textContent = m.material;
     document.getElementById('m-size').textContent = m.size;
     document.getElementById('m-date').textContent = m.date;
-    drawStatue(m.subject);
+    generateImage(m);
     document.getElementById('monument').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
