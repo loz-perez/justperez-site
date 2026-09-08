@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monumento Innecesario — casa-perez</title>
+<meta name="description" content="Un generador de monumentos conmemorativos absurdos con su historia oficial. Homenaje a lo que nadie pidió recordar. 100% en el navegador.">
+<meta property="og:title" content="Monumento Innecesario — justperez.uk">
+<meta property="og:description" content="Se erige esta estatua. A qué, no importa. El homenaje es lo que cuenta.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxsaW5lIHgxPSIxNiIgeTE9IjkiIHgyPSIxNiIgeTI9IjIzIiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkiIHkxPSIxNiIgeDI9IjIzIiB5Mj0iMTYiIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNjYXA9InJvdW5kIi8+PC9zdmc+">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --bg: #0F1717;
+    --bg-alt: #16211F;
+    --bg-alt-2: #1C2A27;
+    --ink: #ECEEE8;
+    --ink-dim: #9FAEA7;
+    --ink-faint: #56655F;
+    --accent: #E8A33D;
+    --accent-2: #4FA98B;
+    --line: rgba(236,238,232,0.14);
+    --line-soft: rgba(236,238,232,0.07);
+
+    --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scrollbar-color: var(--ink-faint) transparent; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection{ background: var(--accent); color: #221604; }
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .bg-grid{
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse 78% 55% at 50% 0%, black 0%, transparent 72%);
+  }
+  .bg-grain{
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.6;
+    background-repeat: repeat; background-size: 96px 96px;
+  }
+  .bg-glow{
+    position: fixed; top: -12%; left: 50%; width: min(900px, 140vw); height: 520px;
+    transform: translateX(-50%); pointer-events: none; z-index: 0;
+    background: radial-gradient(closest-side, rgba(232,163,61,0.10), rgba(232,163,61,0) 70%);
+  }
+  .regmark{ position: fixed; width: 13px; height: 13px; z-index: 0; opacity: 0.4; pointer-events: none;
+    background:
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 100% 1px no-repeat,
+      linear-gradient(var(--ink-faint), var(--ink-faint)) center / 1px 100% no-repeat; }
+  .regmark.tl{ top: 16px; left: 16px; } .regmark.tr{ top: 16px; right: 16px; }
+  .regmark.bl{ bottom: 16px; left: 16px; } .regmark.br{ bottom: 16px; right: 16px; }
+  @media (max-width: 520px){ .regmark{ display: none; } }
+
+  .page{
+    max-width: 680px; margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5.5rem) 1.5rem clamp(3rem, 8vw, 5rem);
+  }
+  .page > *{ position: relative; z-index: 1; }
+
+  .eyebrow{
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-dim);
+    display: flex; align-items: center; gap: 0.6em; margin: 0 0 1.7rem;
+  }
+  .eyebrow::before{
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-2); box-shadow: 0 0 0 3px rgba(79,169,139,0.18); flex: none;
+  }
+
+  h1{
+    font-family: var(--font-display); font-weight: 500; font-style: normal;
+    font-size: clamp(2.7rem, 8.5vw, 4.5rem); line-height: 1.0; letter-spacing: -0.015em;
+    text-wrap: balance; margin: 0 0 0.7rem;
+  }
+  .marginalia{
+    font-family: var(--font-display); font-style: italic; font-weight: 440;
+    font-size: 1.15rem; color: var(--ink-dim); max-width: 30em; margin: 0 0 1.8rem; text-wrap: balance;
+  }
+  .lede{
+    font-size: 1.02rem; line-height: 1.62; color: var(--ink); max-width: 34em; margin: 0 0 0.85rem;
+  }
+  .lede + .lede{ color: var(--ink-dim); font-size: 0.95rem; margin: 0; }
+
+  .studio{
+    display: grid; gap: 1rem; margin-top: 2.2rem;
+  }
+  .field{
+    display: flex; flex-direction: column; gap: 0.45rem;
+  }
+  .field label{
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-dim);
+  }
+  .field input{
+    background: var(--bg-alt); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 0.8rem 1rem; font-family: var(--font-body); font-size: 1rem;
+  }
+  .field input::placeholder{ color: var(--ink-faint); }
+  .field input:focus{ outline: 2px solid var(--accent); outline-offset: 2px; border-color: transparent; }
+
+  .controls{
+    display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 0.4rem;
+  }
+  .btn{
+    font-family: var(--font-body); font-size: 0.95rem; font-weight: 500; color: #221604;
+    background: var(--accent); border: none; border-radius: 6px;
+    padding: 0.75rem 1.4rem; cursor: pointer; transition: transform 0.08s ease, filter 0.15s ease;
+  }
+  .btn:hover{ filter: brightness(1.08); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.ghost{
+    background: transparent; color: var(--ink-dim); border: 1px solid var(--line);
+  }
+  .btn.ghost:hover{ color: var(--ink); border-color: var(--ink-faint); }
+
+  .monument{
+    margin-top: 2.4rem; border: 1px solid var(--line); border-radius: 7px;
+    background: var(--bg-alt); box-shadow: 0 1px 0 0 var(--line-soft) inset, 0 14px 40px -18px rgba(0,0,0,0.55);
+    overflow: hidden;
+  }
+  .monument-head{
+    display: flex; align-items: center; flex-wrap: wrap; gap: 0.65rem;
+    padding: 0.65rem 1rem; border-bottom: 1px solid var(--line); background: var(--bg-alt-2);
+  }
+  .monument-dots{ display: flex; gap: 6px; flex: none; }
+  .monument-dots span{ width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); }
+  .monument-title{
+    font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.02em; color: var(--ink-dim);
+  }
+  .monument-body{ padding: 1.4rem 1.4rem 1.6rem; }
+
+  .statue{
+    width: 100%; aspect-ratio: 3 / 2; border-radius: 6px;
+    background:
+      radial-gradient(closest-side at 50% 120%, rgba(232,163,61,0.16), rgba(232,163,61,0) 70%),
+      var(--bg-alt-2);
+    border: 1px solid var(--line-soft);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.3rem; overflow: hidden;
+  }
+  .statue svg{ width: 62%; height: 100%; }
+
+  .plaque{
+    border-left: 3px solid var(--accent); background: var(--bg-alt-2);
+    padding: 1rem 1.2rem; border-radius: 0 6px 6px 0; margin-bottom: 1.2rem;
+  }
+  .plaque .name{
+    font-family: var(--font-display); font-weight: 500; font-size: 1.5rem;
+    line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 0.35rem;
+  }
+  .plaque .year{ font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); }
+  .plaque .desc{
+    font-size: 0.98rem; line-height: 1.55; color: var(--ink-dim); margin: 0.6rem 0 0;
+  }
+
+  .meta-row{
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint);
+  }
+  .meta-row b{ color: var(--ink-dim); font-weight: 500; }
+
+  footer{
+    margin-top: clamp(2.6rem, 6vw, 3.2rem);
+    display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap;
+    gap: 0.6rem 1.2rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-dim);
+  }
+
+  @media (max-width: 460px){
+    .statue{ aspect-ratio: 4 / 3; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="bg-grain" id="bg-grain" aria-hidden="true"></div>
+<span class="regmark tl" aria-hidden="true"></span>
+<span class="regmark tr" aria-hidden="true"></span>
+<span class="regmark bl" aria-hidden="true"></span>
+<span class="regmark br" aria-hidden="true"></span>
+
+<main class="page">
+  <p class="eyebrow">casa perez — monumentos</p>
+  <h1>Monumento Innecesario</h1>
+  <p class="marginalia">homenaje a lo que nadie pidió recordar.</p>
+  <p class="lede">Cada gran ciudad tiene una estatua de alguien que hizo algo. Esta es la máquina que homenajea a los que hicieron... algo.</p>
+  <p class="lede">Escribí a quién o qué querés conmemorar, o dejá el azar decidir. El mármol, la placa y la historia oficial se generan solos.</p>
+
+  <div class="studio">
+    <div class="field">
+      <label for="subject">A quién / a qué se homenajea</label>
+      <input id="subject" type="text" placeholder="el excelente señal de radio comercial" autocomplete="off">
+    </div>
+    <div class="controls">
+      <button class="btn" id="generate" type="button">Erigir monumento</button>
+      <button class="btn ghost" id="shuffle" type="button">Dejarlo al azar</button>
+    </div>
+  </div>
+
+  <section class="monument" id="monument" aria-live="polite" hidden>
+    <div class="monument-head">
+      <span class="monument-dots"><span></span><span></span><span></span></span>
+      <span class="monument-title">comisión de homenajes / expediente</span>
+    </div>
+    <div class="monument-body">
+      <div class="statue" id="statue" aria-hidden="true"></div>
+      <div class="plaque">
+        <p class="name" id="m-name"></p>
+        <span class="year" id="m-year"></span>
+        <p class="desc" id="m-desc"></p>
+      </div>
+      <div class="meta-row">
+        <span>material: <b id="m-material"></b></span>
+        <span>altura: <b id="m-size"></b></span>
+        <span>inaugurado: <b id="m-date"></b></span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 Lorenzo Perez</span>
+    <span>justperez.uk/monumento</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+  // grain
+  try{
+    var size = 96;
+    var c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    var ctx = c.getContext('2d');
+    var img = ctx.createImageData(size, size);
+    for (var i = 0; i < img.data.length; i += 4){
+      var v = Math.random() * 255;
+      img.data[i] = v; img.data[i+1] = v; img.data[i+2] = v;
+      img.data[i+3] = Math.random() * 22;
+    }
+    ctx.putImageData(img, 0, 0);
+    var layer = document.getElementById('bg-grain');
+    if (layer) layer.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+  } catch (e) {}
+
+  // ---- data ----
+  var SUBJECTS = [
+    "el excelente señal de radio comercial",
+    "el wifi del living que aguantó tres días",
+    "el que se levantó temprano un sábado",
+    "la siesta perfecta del 2019",
+    "el mate que nunca se pasó de amargo",
+    "el estacionamiento en contramano",
+    "la promesa de empezar el gym en enero",
+    "el asado que salió bien a la primera",
+    "el grupo de WhatsApp que quedó en silencio",
+    "el cargador que siempre estaba donde lo buscabas",
+    "el último capítulo que nunca viste",
+    "el 'ya llego' que sí llegó",
+    "la cumbia que pegó en la joda",
+    "el remis que llegó a tiempo",
+    "el que cerró la heladera despacio",
+    "el pan de ayer con el que hiciste tostadas",
+    "la playlist que nadie salteó",
+    "el 'un minuto' que fue un minuto",
+    "el que no dijo 'te lo dije'",
+    "la fila que avanzó rápido"
+  ];
+
+  var MATERIALS = [
+    "bronce patinado", "mármol de carrara (sobrante)", "cemento con intención",
+    "hierro reciclado de un portón", "granito importado de mala gana",
+    "piedra local con pretensiones", "aluminio anodizado", "hormigón armado con fe",
+    "cobre fundido de cables viejos", "madera de un pallet que sobraba"
+  ];
+
+  var SIZES = ["2,4 m", "3,1 m", "1,8 m", "4,2 m", "2,9 m", "3,6 m", "1,5 m", "5,0 m"];
+
+  var VERBS = [
+    "conmemora", "celebra", "eterniza", "homenajea", "recuerda", "consagra",
+    "glorifica", "perpetúa", "venera", "reivindica"
+  ];
+
+  var FRAMES = [
+    "la gesta de", "el legado de", "el sacrificio de", "la hazaña de",
+    "el esfuerzo silencioso de", "la contribución de", "el paso de",
+    "la breve pero intensa existencia de", "el innegable aporte de",
+    "la memoria de"
+  ];
+
+  var CLOSERS = [
+    "que nadie pidió, pero que merecía ser contado.",
+    "que marcó a una generación entera (de entre 3 y 4 personas).",
+    "cuya historia, hasta hoy, era desconocida incluso para los protagonistas.",
+    "que cambió la historia local para siempre, o al menos la tarde.",
+    "que la comisión consideró imposible de ignorar.",
+    "que quedará en los libros de historia, apenas termine de escribirse.",
+    "que resistió el paso del tiempo, el del clima y el de la crítica.",
+    "que merece un lugar en el corazón de la ciudad y un espacio en la plaza.",
+    "cuya leyenda crece con cada visita guiada inventada.",
+    "que la posteridad agradecerá, en cuanto se entere."
+  ];
+
+  var DATES = [
+    "12 de marzo de 2023", "3 de julio de 2018", "21 de setiembre de 2021",
+    "9 de noviembre de 2015", "1 de enero de 2024", "17 de mayo de 2019",
+    "28 de agosto de 2022", "6 de febrero de 2016"
+  ];
+
+  // ---- generation ----
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function capitalize(s){
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function generate(subject){
+    var s = (subject || '').trim();
+    if (!s){
+      s = pick(SUBJECTS);
+      document.getElementById('subject').value = s;
+    }
+    var material = pick(MATERIALS);
+    var size = pick(SIZES);
+    var date = pick(DATES);
+    var verb = pick(VERBS);
+    var frame = pick(FRAMES);
+    var closer = pick(CLOSERS);
+
+    var name = capitalize(verb + ' ' + frame + ' ' + s).replace(/ de el /g, ' del ');
+    var desc = 'En esta plaza, la comisión de homenajes decide recordar ' + frame + ' ' + s +
+      ', ' + closer + ' La obra, de ' + material + ', fue inaugurada con la solemnidad que ' +
+      'el caso ameritaba (poca) y la presencia de las autoridades (menos).';
+    desc = desc.replace(/ de el /g, ' del ');
+
+    return {
+      name: name,
+      year: date.split(' de ')[2],
+      desc: desc,
+      material: material,
+      size: size,
+      date: date,
+      subject: s
+    };
+  }
+
+  // ---- statue drawing ----
+  function drawStatue(subject){
+    var el = document.getElementById('statue');
+    var seed = 0;
+    for (var i = 0; i < subject.length; i++) seed = (seed * 31 + subject.charCodeAt(i)) % 100000;
+    var rand = mulberry(seed);
+
+    var pedestalH = 26;
+    var baseY = 100 - pedestalH;
+    var bodyH = 34 + rand() * 14;
+    var headR = 7 + rand() * 3;
+    var armW = 4 + rand() * 3;
+    var armUp = rand() > 0.4;
+
+    var svg = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">';
+    // pedestal
+    svg += '<rect x="26" y="' + baseY + '" width="48" height="' + pedestalH + '" rx="1" fill="rgba(236,238,232,0.16)"/>';
+    svg += '<rect x="30" y="' + (baseY + 6) + '" width="40" height="3" fill="rgba(232,163,61,0.5)"/>';
+    // body
+    svg += '<rect x="' + (50 - bodyH/2) + '" y="' + (baseY - bodyH) + '" width="' + bodyH + '" height="' + bodyH + '" rx="' + (bodyH/3) + '" fill="rgba(236,238,232,0.28)"/>';
+    // arms
+    if (armUp){
+      svg += '<rect x="' + (50 + bodyH/2 - 2) + '" y="' + (baseY - bodyH + 6) + '" width="' + armW + '" height="' + (bodyH*0.6) + '" rx="2" fill="rgba(236,238,232,0.28)" transform="rotate(-35 ' + (50 + bodyH/2) + ' ' + (baseY - bodyH + 6) + ')"/>';
+    } else {
+      svg += '<rect x="' + (50 + bodyH/2 - 2) + '" y="' + (baseY - bodyH*0.4) + '" width="' + armW + '" height="' + (bodyH*0.55) + '" rx="2" fill="rgba(236,238,232,0.28)"/>';
+    }
+    svg += '<rect x="' + (50 - bodyH/2 - armW + 2) + '" y="' + (baseY - bodyH*0.4) + '" width="' + armW + '" height="' + (bodyH*0.55) + '" rx="2" fill="rgba(236,238,232,0.28)"/>';
+    // head
+    svg += '<circle cx="50" cy="' + (baseY - bodyH - headR - 2) + '" r="' + headR + '" fill="rgba(236,238,232,0.42)"/>';
+    svg += '</svg>';
+
+    el.innerHTML = svg;
+  }
+
+  function mulberry(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---- render ----
+  function render(){
+    var subject = document.getElementById('subject').value;
+    var m = generate(subject);
+    document.getElementById('monument').hidden = false;
+    document.getElementById('m-name').textContent = m.name;
+    document.getElementById('m-year').textContent = 'inaugurado ' + m.year;
+    document.getElementById('m-desc').textContent = m.desc;
+    document.getElementById('m-material').textContent = m.material;
+    document.getElementById('m-size').textContent = m.size;
+    document.getElementById('m-date').textContent = m.date;
+    drawStatue(m.subject);
+    document.getElementById('monument').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  document.getElementById('generate').addEventListener('click', render);
+  document.getElementById('shuffle').addEventListener('click', function(){
+    document.getElementById('subject').value = '';
+    render();
+  });
+  document.getElementById('subject').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') render();
+  });
+
+  // first render
+  render();
+})();
+</script>
+</body>
+</html>
