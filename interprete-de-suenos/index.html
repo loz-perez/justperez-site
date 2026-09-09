@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Intérprete de Sueños — casa-perez</title>
+<meta name="description" content="Análisis profundo y definitivo de tus sueños. El que te faltaba.">
+<meta property="og:title" content="Intérprete de Sueños — justperez.uk">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjciIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+PC9zdmc+">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>:root{--bg:#0F1717;--bg-alt:#16211F;--bg-alt-2:#1C2A27;--ink:#ECEEE8;--ink-dim:#9FAEA7;--ink-faint:#56655F;--accent:#E8A33D;--accent-2:#4FA98B;--line:rgba(236,238,232,0.14);--line-soft:rgba(236,238,232,0.07);--font-display:"Fraunces",Georgia,"Iowan Old Style",serif;--font-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);margin:0;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#221604}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);background-size:42px 42px;-webkit-mask-image:radial-gradient(ellipse 78% 55% at 50% 0%,black 0%,transparent 72%);mask-image:radial-gradient(ellipse 78% 55% at 50% 0%,black 0%,transparent 72%)}
+.bg-glow{position:fixed;top:-12%;left:50%;width:min(900px,140vw);height:520px;transform:translateX(-50%);pointer-events:none;z-index:0;background:radial-gradient(closest-side,rgba(232,163,61,0.08),rgba(232,163,61,0) 70%)}
+.regmark{position:fixed;width:13px;height:13px;z-index:0;opacity:0.4;pointer-events:none;background:linear-gradient(var(--ink-faint),var(--ink-faint)) center/100% 1px no-repeat,linear-gradient(var(--ink-faint),var(--ink-faint)) center/1px 100% no-repeat}
+.regmark.tl{top:16px;left:16px}.regmark.tr{top:16px;right:16px}.regmark.bl{bottom:16px;left:16px}.regmark.br{bottom:16px;right:16px}
+@media(max-width:520px){.regmark{display:none}}
+.page{max-width:660px;margin:0 auto;padding:clamp(2.5rem,6vw,5rem) 1.5rem;flex:1;width:100%}.page>*{position:relative;z-index:1}
+.eyebrow{font-family:var(--font-mono);font-size:.725rem;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:.5rem}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,4vw,2.3rem);font-weight:500;letter-spacing:-.02em;line-height:1.12;margin:0 0 .1em}
+.sub{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);margin-bottom:clamp(1.5rem,4vw,2.5rem);letter-spacing:.3px}
+.input-row{border-bottom:1px solid var(--line);max-width:400px;margin-bottom:16px;display:flex;align-items:baseline;gap:8px}
+.input-row input{background:transparent;border:none;color:var(--ink);font-family:var(--font-mono);font-size:.9rem;padding:10px 0;flex:1;outline:none}
+.input-row input:focus{color:#fff}.input-row input::placeholder{color:var(--ink-faint)}
+.btn{background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:10px 22px;font-family:var(--font-mono);font-size:.8rem;color:var(--ink);cursor:pointer;transition:all .2s;margin-right:8px;margin-bottom:8px}
+.btn:hover{background:var(--bg-alt-2);border-color:var(--accent)}
+.output-box{margin-top:clamp(1.5rem,4vw,2.5rem);border-left:2px solid var(--accent);padding:0 0 0 1.4rem;min-height:80px;display:flex;flex-direction:column;justify-content:center}
+.output-text{font-family:var(--font-display);font-size:clamp(1rem,2.2vw,1.25rem);line-height:1.65;font-style:italic;animation:fadeIn .45s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.placeholder{font-family:var(--font-mono);font-size:.82rem;color:var(--ink-faint)}
+.footer-spacer{flex:1}
+.nav-back{font-family:var(--font-mono);font-size:.75rem;margin-top:2rem}.nav-back a{color:var(--ink-faint);text-decoration:none;transition:color .2s}.nav-back a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="bg-glow"></div>
+<div class="regmark tl"></div><div class="regmark tr"></div>
+<div class="regmark bl"></div><div class="regmark br"></div>
+<div class="page">
+<p class="eyebrow">✦ casa-perez / sueños</p>
+<h1>Intérprete de Sueños</h1>
+<p class="sub">contá tu sueño y te digo qué significa realmente (mentira)</p>
+<div class="input-row"><input type="text" id="input" placeholder="ej: soñé que volaba pero me perseguía un pato" onkeydown="if(event.key==='Enter')interpretar()"></div>
+<button class="btn" onclick="interpretar()">Interpretar</button>
+<div class="output-box"><div class="placeholder" id="placeholder">— contá tu sueño —</div><div class="output-text" id="output" style="display:none"></div></div>
+<div class="footer-spacer"></div>
+<div class="nav-back"><a href="/">← casa-perez</a></div>
+</div>
+<script>
+const prefijos=["Tu subconsciente está tratando de decirte que","Este sueño es bastante claro:","Los antiguos dirían que","El simbolismo es ineludible:","En términos freudianos berretas,","No necesitás un intérprete para saber que","La respuesta es sencilla:","Soñar con esto significa una sola cosa:"];
+const significados=["necesitás salir más a la calle, pero tampoco tanto.","estás evitando una conversación incómoda. La estás posponiendo desde marzo.","tenés hambre. No es un símbolo. Son las 3am y tenés hambre.","estás reviviendo algo que pasó hace años y todavía no procesaste.","querés llamar a esa persona. Hacelo. O no. Pero bueno, soñaste con eso.","tu cerebro está haciendo limpieza y tiró cosas viejas a la papelera.","tenés ansiedad por algo que no podés controlar. Nada nuevo.","estás listo para un cambio pero te da miedo. El sueño te empuja.","estás procesando una emoción que no te permitís tener despierto.","tu mente te está mostrando lo que ignorás de día porque andas apurado.","hay algo en tu vida que ya no te sirve pero lo sostenés por costumbre.","estás buscando una respuesta que ya sabés. Solo querés confirmación."];
+let last='';
+function interpretar(){
+const txt=document.getElementById('input').value.trim();
+if(!txt)return;
+let p,i;do{p=prefijos[Math.floor(Math.random()*prefijos.length)];i=significados[Math.floor(Math.random()*significados.length)]}while(p+i===last);
+last=p+i;
+const msg=`"${txt}" → ${p} ${i}`;
+const el=document.getElementById('output'),pl=document.getElementById('placeholder');
+pl.style.display='none';el.style.display='block';el.textContent=msg;
+el.style.animation='none';requestAnimationFrame(()=>el.style.animation='fadeIn .45s ease');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Excusas Profesionales — casa-perez</title>
+<meta name="description" content="Generador de excusas verosímiles para no ir a esa cosa que te olvidaste que existía.">
+<meta property="og:title" content="Excusas Profesionales — justperez.uk">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxsaW5lIHgxPSIxNiIgeTE9IjkiIHgyPSIxNiIgeTI9IjIzIiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIvPjxsaW5lIHgxPSI5IiB5MT0iMTYiIHgyPSIyMyIgeTI9IjE2IiBzdHJva2U9IiNFOEEzM0QiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>:root{--bg:#0F1717;--bg-alt:#16211F;--bg-alt-2:#1C2A27;--ink:#ECEEE8;--ink-dim:#9FAEA7;--ink-faint:#56655F;--accent:#E8A33D;--accent-2:#4FA98B;--line:rgba(236,238,232,0.14);--line-soft:rgba(236,238,232,0.07);--font-display:"Fraunces",Georgia,"Iowan Old Style",serif;--font-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);margin:0;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#221604}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);background-size:42px 42px;-webkit-mask-image:radial-gradient(ellipse 78% 55% at 50% 0%,black 0%,transparent 72%);mask-image:radial-gradient(ellipse 78% 55% at 50% 0%,black 0%,transparent 72%)}
+.bg-glow{position:fixed;top:-12%;left:50%;width:min(900px,140vw);height:520px;transform:translateX(-50%);pointer-events:none;z-index:0;background:radial-gradient(closest-side,rgba(232,163,61,0.08),rgba(232,163,61,0) 70%)}
+.regmark{position:fixed;width:13px;height:13px;z-index:0;opacity:0.4;pointer-events:none;background:linear-gradient(var(--ink-faint),var(--ink-faint)) center/100% 1px no-repeat,linear-gradient(var(--ink-faint),var(--ink-faint)) center/1px 100% no-repeat}
+.regmark.tl{top:16px;left:16px}.regmark.tr{top:16px;right:16px}.regmark.bl{bottom:16px;left:16px}.regmark.br{bottom:16px;right:16px}
+@media(max-width:520px){.regmark{display:none}}
+.page{max-width:660px;margin:0 auto;padding:clamp(2.5rem,6vw,5rem) 1.5rem;flex:1;width:100%}.page>*{position:relative;z-index:1}
+.eyebrow{font-family:var(--font-mono);font-size:.725rem;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:.5rem}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,4vw,2.3rem);font-weight:500;letter-spacing:-.02em;line-height:1.12;margin:0 0 .1em}
+.sub{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);margin-bottom:clamp(1.5rem,4vw,2.5rem);letter-spacing:.3px}
+.btn{background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:10px 22px;font-family:var(--font-mono);font-size:.8rem;color:var(--ink);cursor:pointer;transition:all .2s;margin-right:8px;margin-bottom:8px}
+.btn:hover{background:var(--bg-alt-2);border-color:var(--accent)}
+.output-box{margin-top:clamp(1.5rem,4vw,2.5rem);border-left:2px solid var(--accent);padding:0 0 0 1.4rem;min-height:80px;display:flex;flex-direction:column;justify-content:center}
+.output-text{font-family:var(--font-display);font-size:clamp(1rem,2.2vw,1.25rem);font-style:italic;line-height:1.65;animation:fadeIn .45s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.placeholder{font-family:var(--font-mono);font-size:.82rem;color:var(--ink-faint)}
+.footer-spacer{flex:1}
+.nav-back{font-family:var(--font-mono);font-size:.75rem;margin-top:2rem}.nav-back a{color:var(--ink-faint);text-decoration:none;transition:color .2s}.nav-back a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="bg-glow"></div>
+<div class="regmark tl"></div><div class="regmark tr"></div>
+<div class="regmark bl"></div><div class="regmark br"></div>
+<div class="page">
+<p class="eyebrow">✦ casa-perez / excusas</p>
+<h1>Excusas Profesionales</h1>
+<p class="sub">para no ir a eso que te olvidaste que existía</p>
+<div style="margin-bottom:.5rem">
+<button class="btn" onclick="generar('laboral')">💼 Laboral</button>
+<button class="btn" onclick="generar('social')">🎭 Social</button>
+<button class="btn" onclick="generar('familiar')">👪 Familiar</button>
+</div>
+<div class="output-box"><div class="placeholder" id="placeholder">— elegí una categoría —</div><div class="output-text" id="output" style="display:none"></div></div>
+<div class="footer-spacer"></div>
+<div class="nav-back"><a href="/">← casa-perez</a></div>
+</div>
+<script>
+const excusas={
+laboral:["Tengo un pico de trabajo que no daba espera — el clientazo que te paga el sueldo, no el que te invita un café.","Mi compu decidió actualizar 47 cosas justo ahora. La reinicié para que arrancara y se reinició 3 veces seguidas.","Me quedé sin Internet. No, no tengo datos. El plan me lo pagaron en fiado y se venció.","Olvidé la reunión pero la verdad es que ya la había pensado y no iba a aportar nada.","Me pidieron que firme un remito urgente. Firmé. No era un remito. Era una declaración jurada de algo que no hice. Ahora estoy aclarando.","Se me solaparon dos meetings. Prioricé al que me da la evaluación de desempeño.","Me quedé dormido el lunes porque pensé que no iba a pasar nada. Pasó."],
+social:["Me confundí de día. No, no es que no quisiera venir, es que mi calendario está tan mal que señaló un martes que era sábado y yo confié.","Justo cuando iba a salir me agarró hambre. No un hambre — un vacío existencial.","Llegó un delivery que no pedí. Lo esperé para ver si tenía razón el repartidor. Tenía razón. No era mío.","Pensé que era la semana que viene. No me juzgues, la pandemia rompió mi noción temporal.","Se me hizo tarde porque discutí 40 minutos con la heladera sobre qué comer hoy y perdí incluso esa discusión."],
+familiar:["Mi mamá me pidió que la acompañe a hacer un trámite. Y si vas a elegir entre un trámite y un cumpleaños, la familia es la familia. La otra también, pero esta viene con trámite.","No pude viajar porque se me pinchó una rueda. No la que usé de excusa — la de verdad, la del auto.","Me atacó un dolor de cabeza galopante que solo se cura con inactividad social y un Gatorade.","Llamó mi abuela para contarme un sueño que tuvo con un vecino. No podía cortarle. Duró 45 minutos.","Estaba yendo, me paró un semáforo y en ese rojo pensé que no quería ir. Doblé y me fui a casa."]
+};
+let last=[-1,''];
+function generar(cat){
+const a=excusas[cat];let i;do{i=Math.floor(Math.random()*a.length)}while(i===last[0]&&cat===last[1]&&a.length>1);
+last=[i,cat];
+const el=document.getElementById('output'),pl=document.getElementById('placeholder');
+pl.style.display='none';el.style.display='block';el.textContent=a[i];
+el.style.animation='none';requestAnimationFrame(()=>el.style.animation='fadeIn .45s ease');
+}
+</script>
+</body>
+</html>

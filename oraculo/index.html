@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Oráculo de Bolsillo — casa-perez</title>
+<meta name="description" content="Consultá al oráculo. No te va a cambiar la vida. Pero te va a responder.">
+<meta property="og:title" content="Oráculo de Bolsillo — justperez.uk">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBGMTcxNyIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjUiIHN0cm9rZT0iI0U4QTMzRCIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+PC9zdmc+">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>:root{--bg:#0F1717;--bg-alt:#16211F;--bg-alt-2:#1C2A27;--ink:#ECEEE8;--ink-dim:#9FAEA7;--ink-faint:#56655F;--accent:#E8A33D;--accent-2:#4FA98B;--line:rgba(236,238,232,0.14);--line-soft:rgba(236,238,232,0.07);--font-display:"Fraunces",Georgia,"Iowan Old Style",serif;--font-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;--font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);margin:0;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#221604}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);background-size:42px 42px;-webkit-mask-image:radial-gradient(ellipse 78% 55% at 50% 0%,black 0%,transparent 72%);mask-image:radial-gradient(ellipse 78% 55% at 50% 0%,black 0%,transparent 72%)}
+.bg-glow{position:fixed;top:-12%;left:50%;width:min(900px,140vw);height:520px;transform:translateX(-50%);pointer-events:none;z-index:0;background:radial-gradient(closest-side,rgba(232,163,61,0.08),rgba(232,163,61,0) 70%)}
+.regmark{position:fixed;width:13px;height:13px;z-index:0;opacity:0.4;pointer-events:none;background:linear-gradient(var(--ink-faint),var(--ink-faint)) center/100% 1px no-repeat,linear-gradient(var(--ink-faint),var(--ink-faint)) center/1px 100% no-repeat}
+.regmark.tl{top:16px;left:16px}.regmark.tr{top:16px;right:16px}.regmark.bl{bottom:16px;left:16px}.regmark.br{bottom:16px;right:16px}
+@media(max-width:520px){.regmark{display:none}}
+.page{max-width:660px;margin:0 auto;padding:clamp(2.5rem,6vw,5rem) 1.5rem;flex:1;width:100%}.page>*{position:relative;z-index:1}
+.eyebrow{font-family:var(--font-mono);font-size:.725rem;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:.5rem}
+h1{font-family:var(--font-display);font-size:clamp(1.6rem,4vw,2.3rem);font-weight:500;letter-spacing:-.02em;line-height:1.12;margin:0 0 .1em}
+.sub{font-family:var(--font-mono);font-size:.75rem;color:var(--ink-faint);margin-bottom:clamp(1.5rem,4vw,2.5rem);letter-spacing:.3px}
+.input-row{border-bottom:1px solid var(--line);max-width:400px;margin-bottom:16px;display:flex;align-items:baseline;gap:8px}
+.input-row input{background:transparent;border:none;color:var(--ink);font-family:var(--font-mono);font-size:.9rem;padding:10px 0;flex:1;outline:none}
+.input-row input:focus{color:#fff}.input-row input::placeholder{color:var(--ink-faint)}
+.btn{background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:10px 22px;font-family:var(--font-mono);font-size:.8rem;color:var(--ink);cursor:pointer;transition:all .2s;margin-right:8px;margin-bottom:8px}
+.btn:hover{background:var(--bg-alt-2);border-color:var(--accent)}
+.output-box{margin-top:clamp(1.5rem,4vw,2.5rem);border-left:2px solid var(--accent);padding:0 0 0 1.4rem;min-height:80px;display:flex;flex-direction:column;justify-content:center}
+.output-text{font-family:var(--font-display);font-size:clamp(1rem,2.2vw,1.25rem);line-height:1.65;font-style:italic;animation:fadeIn .45s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.placeholder{font-family:var(--font-mono);font-size:.82rem;color:var(--ink-faint)}
+.footer-spacer{flex:1}
+.nav-back{font-family:var(--font-mono);font-size:.75rem;margin-top:2rem}.nav-back a{color:var(--ink-faint);text-decoration:none;transition:color .2s}.nav-back a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="bg-glow"></div>
+<div class="regmark tl"></div><div class="regmark tr"></div>
+<div class="regmark bl"></div><div class="regmark br"></div>
+<div class="page">
+<p class="eyebrow">✦ casa-perez / oráculo</p>
+<h1>Oráculo de Bolsillo</h1>
+<p class="sub">hacé una pregunta y recibí una respuesta que suena a sabiduría ancestral pero es puro verso</p>
+<div class="input-row"><input type="text" id="input" placeholder="ej: ¿debo renunciar a mi trabajo?" onkeydown="if(event.key==='Enter')consultar()"></div>
+<button class="btn" onclick="consultar()">Consultar al Oráculo</button>
+<div class="output-box"><div class="placeholder" id="placeholder">— el oráculo espera tu pregunta —</div><div class="output-text" id="output" style="display:none"></div></div>
+<div class="footer-spacer"></div>
+<div class="nav-back"><a href="/">← casa-perez</a></div>
+</div>
+<script>
+const oraculo=[
+"El oráculo dice: sí. Pero también dice no. Depende de si te alcanza para el alquiler.",
+"Los astros indican que ya tomaste la decisión. Solo querés que alguien te la valide.",
+"Las runas muestran un camino incierto. Mejor consultá de nuevo después de comer algo.",
+"El oráculo no sabe. Pero nota que hacés esta pregunta desde hace tres años.",
+"Sí. No. Tal vez. El oráculo vale por la respuesta que necesitás, no la que esperás.",
+"El universo quiere que dejes de preguntar y hagas algo. Cualquier cosa.",
+"Los números dicen que tenés 73% de posibilidades de que salga bien. El oráculo no sabe de dónde sacó ese número.",
+"El oráculo te observa con ternura. Sabés la respuesta. Solo necesitás escucharte. Bah, o no.",
+"La pregunta correcta no es '¿debería?' sino '¿estoy listo para las consecuencias?'",
+"El oráculo confía en vos. No sabe bien por qué, pero confía.",
+"Los signos son claros: esta semana no. La semana que viene tampoco. Preguntá en 2027.",
+"Tu energía está alineada con un cambio inminente. O con hambre. Comé algo y volvé a preguntar.",
+"El cosmos te dice: hace lo que quieras, total después te vas a arrepentir igual.",
+"Sí, pero con condiciones. Muchas condiciones. Básicamente un sí que suena a no.",
+"La respuesta está en tu interior. Pero está tan escondida que ni vos la encontras.",
+"Tiré los dados y salió 7. No sé qué significa pero suena importante.",
+];
+let last='';
+function consultar(){
+const txt=document.getElementById('input').value.trim();
+if(!txt)return;
+let m;do{m=oraculo[Math.floor(Math.random()*oraculo.length)]}while(m===last&&oraculo.length>1);
+last=m;
+const el=document.getElementById('output'),pl=document.getElementById('placeholder');
+pl.style.display='none';el.style.display='block';el.textContent=m;
+el.style.animation='none';requestAnimationFrame(()=>el.style.animation='fadeIn .45s ease');
+}
+</script>
+</body>
+</html>
